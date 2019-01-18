@@ -62,6 +62,7 @@ def start_lab_session():
         rigging_type = "muscle_ik"
 
     lib_filepath = algorithms.get_blendlibrary_path()
+    algorithms.print_log_report(0,os.listdir(lib_filepath))
 
     obj = None
     is_existing = False
@@ -1302,22 +1303,6 @@ class ResetExpressions(bpy.types.Operator):
         # global mblab_shapekeys
         settings.mblab_shapekeys.reset_expressions_GUI()
         return {'FINISHED'}
-
-
-# class LoadAssets(bpy.types.Operator):
-# """
-# Load assets from library
-# """
-# bl_label = 'Load model from assets library'
-# bl_idname = 'mbast.load_assets_element'
-# bl_description = 'Load the element selected from the assets library'
-# bl_context = 'objectmode'
-# bl_options = {'REGISTER', 'INTERNAL','UNDO'}
-
-# def execute(self, context):
-# scn = bpy.context.scene
-# mblab_proxy.load_asset(scn.mblab_assets_models)
-# return {'FINISHED'}
 
 
 class InsertExpressionKeyframe(bpy.types.Operator):

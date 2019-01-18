@@ -23,30 +23,42 @@ import os
 import bpy
 import json
 import array
-from . import settings
+from . import settings as s
+from pathlib import Path
+from . import multiloading as ml
 
-
-def print_log_report(level_in = -1, text_to_write = "An Error occur"):
+def print_log_report(level_in=-1, text_to_write="An unspecified Error occurred."):
     levels = ["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"]
+    level_mess = ""
+    log_level = 4
     if type(level_in) is str:
-        log_level = levels.index(level_in)
-        level_mess = level_in
+        level_in = level_in.upper()
+        if len(level_in) == 1:
+            for num, i in enumerate(levels):
+                if level_in == i[0]:
+                    log_level = num
+                    level_mess = i
+                    break
+        else:
+            log_level = levels.index(level_in)
+            level_mess = level_in
     # Rewritten to allow use of int control. What's the point of a print log function if you're
     # just going to rewrite the control code all the time?!
     if type(level_in) is int and -1 <= level_in <= levels.__len__():
-        if level_in == -1:
-            level_in = 3;
+        if level_in == -1:  # -1 is also used to denote "ERROR"
+            level_in = 3
         log_level = level_in
         level_mess = levels[level_in]
 
-    if log_level >= settings.debug_level:
-        print(level_mess + ": " + text_to_write)
+    #TODO: rewrite print_log_report to be less stupid
+    if log_level >= s.debug_level:
+        print(level_mess + ": ", text_to_write)
 
     # log_level = 0
     # levels = {"INFO": 0, "DEBUG": 1, "WARNING": 2, "ERROR": 3, "CRITICAL": 4, }
     # if level in levels:
     #     log_level = levels[level]
-    # if log_level >= settings.debug_level:
+    # if log_level >= s.debug_level:
     #     print(level + ": " + text_to_write)
 
 
@@ -61,28 +73,15 @@ def is_writeable(filepath, set_write=True):
         print("WARNING: Writing permission denied for {0}".format(filepath))
     return writeable
 
-# TODO Make
+
 def get_data_path():
-    print_log_report("INFO", "Looking for the retarget data in the folder {0}...".format(settings.data_path))
-    if os.path.isdir(settings.data_path):
-        return settings.data_path
+    print_log_report("INFO",
+                     "Looking for the retarget data in the folder {0}...".format(simple_path(s.data_path)))
+    if os.path.isdir(s.data_path):
+        return s.data_path
     else:
         print_log_report("CRITICAL", "Tools data not found. Please check your Blender addons directory.")
         return None
-    # global data_path
-    # if data_path:
-    #     print_log_report("INFO", "Looking for the retarget data in the folder {0}...".format(simple_path(data_path)))
-    #     return data_path
-    # else:
-    #     addon_directory = os.path.dirname(os.path.realpath(__file__))
-    #     data_dir = os.path.join(addon_directory, "data")
-    #     print_log_report("INFO", "Looking for the retarget data in the folder {0}...".format(simple_path(data_dir)))
-    #     if os.path.isdir(data_dir):
-    #         data_path = data_dir
-    #         return data_dir
-    #     else:
-    #         print_log_report("CRITICAL", "Tools data not found. Please check your Blender addons directory.")
-    #         return None
 
 # def get_data_path():
 #     addon_directory = os.path.dirname(os.path.realpath(__file__))
@@ -95,44 +94,52 @@ def get_data_path():
 #         return None
 
 
-def get_configuration():
-    data_path = get_data_path()
-    if data_path:
-        configuration_path = os.path.join(data_path, "characters_config.json")
-        if os.path.isfile(configuration_path):
-            return load_json_data(configuration_path, "Characters definition")
+# def get_configuration():  # TODO rewrite to use multiple config files
+#     configuration_path = s.data_path.joinpath("characters_config.json")
+#     if configuration_path.exists():
+#         return load_json_data(str(configuration_path), "Characters definition")
+#     else:
+#         print_log_report("CRITICAL","Configuration database not found. Please check your Blender addons directory.")
+#         return None
+#
+#
+# def get_blendlibrary_path():  # TODO rewrite to use multiple Blend files
+#     if s.data_path.exists():
+#         return os.path.join(s.data_path, "humanoid_library.blend")
+#     else:
+#         print_log_report("CRITICAL", "Models library not found. Please check your Blender addons directory.")
+#         return None
+
+
+def exists_database(lib_path):
+    result = False
+    if simple_path(lib_path) != "":
+        if os.path.isdir(lib_path):
+            if len(os.listdir(lib_path)) > 0:
+                for database_file in os.listdir(lib_path):
+                    p_item, extension = os.path.splitext(database_file)
+                    if "json" in extension or "bvh" in extension:
+                        result = True
+                    else:
+                        print_log_report("WARNING", "Unknown file extension in {0}".format(simple_path(lib_path)))
+
         else:
-            print_log_report("CRITICAL",
-                             "Configuration database not found. Please check your Blender addons directory.")
-            return None
+            print_log_report("WARNING", "data path {0} not found".format(simple_path(lib_path)))
+    return result
 
 
-def get_blendlibrary_path():
-    data_path = get_data_path()
-    if data_path:
-        return os.path.join(data_path, "humanoid_library.blend")
-    else:
-        print_log_report("CRITICAL", "Models library not found. Please check your Blender addons directory.")
-        return None
-
-
-def simple_path(input_path, use_basename=False, max_len=5000):
+def simple_path(input_path, use_basename=False):
     """
     Return the last part of long paths
     """
+
+    if type(input_path) is str:
+        input_path = Path(input_path)
+
     if use_basename:
-        return os.path.basename(input_path)
+        return str(input_path.name)
     else:
-        if len(input_path) > max_len:
-            return "[Trunked].." + input_path[len(input_path) - max_len:]
-        else:
-            return os.path.relpath(input_path, os.path.dirname(os.path.realpath(__file__)))
-
-
-def json_booleans_to_python(value):
-    if value == 0:
-        return True
-    return False
+        return str(input_path.relative_to(s.data_path))
 
 
 def quick_dist(p_1, p_2):
@@ -152,23 +159,6 @@ def full_dist(vert1, vert2, axis="ALL"):
         return abs(v1[1] - v2[1])
     if axis == "Z":
         return abs(v1[2] - v2[2])
-
-
-def exists_database(lib_path):
-    result = False
-    if simple_path(lib_path) != "":
-        if os.path.isdir(lib_path):
-            if len(os.listdir(lib_path)) > 0:
-                for database_file in os.listdir(lib_path):
-                    p_item, extension = os.path.splitext(database_file)
-                    if "json" in extension or "bvh" in extension:
-                        result = True
-                    else:
-                        print_log_report("WARNING", "Unknown file extension in {0}".format(simple_path(lib_path)))
-
-        else:
-            print_log_report("WARNING", "data path {0} not found".format(simple_path(lib_path)))
-    return result
 
 
 def length_of_strip(vertices_coords, indices, axis="ALL"):
@@ -444,7 +434,7 @@ def looking_for_humanoid_obj():
         return ("ERROR", msg)
 
     if bpy.app.version >= (2, 80, 0):
-        msg = "Sorry, this version of lab does no work with Blender 2.8"
+        msg = "Sorry, this version of lab does not work with Blender 2.8"
         print_log_report("WARNING", msg)
         return ("ERROR", msg)
 
@@ -1181,6 +1171,7 @@ def generate_items_list(folderpath, file_type="json"):
                     the_descr = "Load and apply {0} from lab library".format(the_item)
                     items_list.append((the_item, the_item, the_descr))
         items_list.sort()
+        print_log_report(0, "generate_items_list: " + str(items_list))
     return items_list
 
 
@@ -1219,19 +1210,16 @@ def get_image(name):
     return None
 
 
-def are_squared_images(image1, image2):
+def is_squared_image(image1):
     size1 = image1.size
-    size2 = image2.size
-
     if size1[0] != size1[1]:
         print_log_report("WARNING", "The image {0} cannot be used: not squared".format(image1.name))
         return False
-
-    if size2[0] != size2[1]:
-        print_log_report("WARNING", "The image {0} cannot be used: not squared".format(image2.name))
-        return False
-
     return True
+
+
+def are_squared_images(image1, image2):
+    return is_squared_image(image1)+is_squared_image(image2)
 
 
 def scale_image_to_fit(image1, image2):
@@ -1250,10 +1238,10 @@ def save_image(name, filepath, fileformat='PNG'):
     img = get_image(name)
     scn = bpy.context.scene
     if img:
-        current_format = scn.render.image_settings.file_format
-        scn.render.image_settings.file_format = fileformat
+        current_format = scn.render.image_s.file_format
+        scn.render.image_s.file_format = fileformat
         img.save_render(filepath)
-        scn.render.image_settings.file_format = current_format
+        scn.render.image_s.file_format = current_format
     else:
         print_log_report("WARNING",
                          "The image {0} cannot be saved because it's not present in bpy.data.images.".format(name))
