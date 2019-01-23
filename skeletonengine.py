@@ -65,7 +65,7 @@ class SkeletonEngine:
             joints_offset_data_path = os.path.join(self.data_path, "joints", self.joints_offset_filename)
             vgroup_data_path = os.path.join(self.data_path, "vgroups", self.groups_filename)
 
-            self.lib_filepath = algorithms.get_blendlibrary_path()
+            self.lib_filepath = algorithms.check_blendlibrary_path()
             self.joints_database = algorithms.load_json_data(joints_data_path, "Joints data")
             self.joints_offset_database = algorithms.load_json_data(joints_offset_data_path, "Joints offset data")
 
@@ -77,7 +77,7 @@ class SkeletonEngine:
 
             if obj_armat is not None:
                 self.store_z_axis()
-                # TODO doesn't look like armature_visibility is used
+                # doesn't look like armature_visibility is used
                 # anywhere
                 #self.armature_visibility = [x for x in obj_armat.layers]
                 self.armature_name = obj_armat.name
