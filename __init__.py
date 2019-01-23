@@ -27,6 +27,9 @@ from bpy_extras.io_utils import ExportHelper, ImportHelper
 from . import facerig
 from . import humanoid, animationengine, proxyengine
 from . import utils
+from . import algorithms
+from . import settings as s
+from . import settings as s
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +66,7 @@ def start_lab_session():
     logger.info("Start_the lab session...")
     scn = bpy.context.scene
     character_identifier = scn.mblab_character_name
+
     rigging_type = "base"
     if scn.mblab_use_ik:
         rigging_type = "ik"
@@ -71,7 +75,8 @@ def start_lab_session():
     if scn.mblab_use_muscle and scn.mblab_use_ik:
         rigging_type = "muscle_ik"
 
-    lib_filepath = algorithms.get_blendlibrary_path()
+    # TODO projmod blendfile goes here
+    lib_filepath = algorithms.check_blendlibrary_path()
 
     obj = None
     is_existing = False
@@ -1809,7 +1814,7 @@ class LoadTemplate(bpy.types.Operator):
     def execute(self, context):
         global mblab_humanoid
         scn = bpy.context.scene
-        lib_filepath = algorithms.get_blendlibrary_path()
+        lib_filepath = algorithms.check_blendlibrary_path()
         base_model_name = mblab_humanoid.characters_config[scn.mblab_template_name]["template_model"]
         obj = algorithms.import_object_from_lib(lib_filepath, base_model_name, scn.mblab_template_name)
         if obj:

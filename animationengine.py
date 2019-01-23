@@ -25,9 +25,10 @@ import bpy
 
 from . import algorithms
 from .utils import get_active_armature
+from . import settings as s
 
 logger = logging.getLogger(__name__)
-
+data_path = s.data_path
 
 class RetargetEngine:
 
@@ -35,21 +36,19 @@ class RetargetEngine:
         self.has_data = False
         self.femaleposes_exist = False
         self.maleposes_exist = False
-        self.data_path = algorithms.get_data_path()
-        self.maleposes_path = os.path.join(self.data_path, self.data_path, "poses", "male_poses")
-        self.femaleposes_path = os.path.join(self.data_path, self.data_path, "poses", "female_poses")
-        if os.path.isdir(self.maleposes_path):
-            self.maleposes_exist = True
-        if os.path.isdir(self.femaleposes_path):
-            self.femaleposes_exist = True
+        # self.data_path = algorithms.get_data_path()  # Is there a reason for this?
+        self.maleposes_path = data_path / "poses" / "male_poses"
+        self.femaleposes_path = data_path / "poses" / "female_poses"
+        self.maleposes_exist = self.maleposes_path.exists()
+        self.femaleposes_exist = self.femaleposes_path
 
         self.body_name = ""
         self.armature_name = ""
         self.skeleton_mapped = {}
-        self.lib_filepath = algorithms.get_blendlibrary_path()
-        self.knowledge_path = os.path.join(self.data_path, "retarget_knowledge.json")
+        self.lib_filepath = algorithms.check_blendlibrary_path()
+        self.knowledge_path = data_path / "retarget_knowledge.json"
 
-        if os.path.isfile(self.lib_filepath) and os.path.isfile(self.knowledge_path):
+        if self.lib_filepath.exists() and self.knowledge_path.is_file():
 
             self.knowledge_database = algorithms.load_json_data(self.knowledge_path, "Skeleton knowledge data")
             self.local_rotation_bones = self.knowledge_database["local_rotation_bones"]
@@ -1394,16 +1393,11 @@ class ExpressionEngineShapeK:
 
     def __init__(self):
         self.has_data = False
-        self.data_path = algorithms.get_data_path()
-        self.human_expression_path = os.path.join(
-            self.data_path,
-            "expressions_comb",
-            "human_expressions")
+        # self.data_path = algorithms.get_data_path()
+        # TODO rewrite expressions to allow for n number of expression sets
+        self.human_expression_path = s.data_path / "expressions_comb" / "human_expressions"
 
-        self.anime_expression_path = os.path.join(
-            self.data_path,
-            "expressions_comb",
-            "anime_expressions")
+        self.anime_expression_path = s.data_path / "expressions_comb" / "anime_expressions"
 
         self.expressions_labels = set()
         self.human_expressions_data = self.load_expression_database(self.human_expression_path)
@@ -1426,6 +1420,7 @@ class ExpressionEngineShapeK:
                     self.model_type = "ANIME"
                     return
 
+# TODO ml
     @staticmethod
     def load_expression(filepath):
 
@@ -1446,6 +1441,7 @@ class ExpressionEngineShapeK:
 
         return char_data
 
+# TODO ml
     def load_expression_database(self, dirpath):
         expressions_data = {}
         if algorithms.exists_database(dirpath):

@@ -14,25 +14,25 @@ import logging
 # mblab_shapekeys = animationengine.ExpressionEngineShapeK()
 # mblab_proxy = proxyengine.ProxyEngine()
 
-debug_level = 0
-data_path = Path(os.path.dirname(os.path.realpath(__file__)), "data")
-
 logger = logging.getLogger(__name__)
+
+settings_path = Path(__file__)
+data_path = settings_path.parents[0] / "data"
 
 def init(context):
     from . import humanoid, animationengine, proxyengine
     from . import multiloading as ml
     from . import algorithms as a
 
-    global mblab_humanoid
-    global mblab_retarget
-    global mblab_shapekeys
-    global mblab_proxy
-
-    mblab_humanoid = humanoid.Humanoid(context["version"])
-    mblab_retarget = animationengine.RetargetEngine()
-    mblab_shapekeys = animationengine.ExpressionEngineShapeK()
-    mblab_proxy = proxyengine.ProxyEngine()
+    # global mblab_humanoid
+    # global mblab_retarget
+    # global mblab_shapekeys
+    # global mblab_proxy
+    #
+    # mblab_humanoid = humanoid.Humanoid(context["version"])
+    # mblab_retarget = animationengine.RetargetEngine()
+    # mblab_shapekeys = animationengine.ExpressionEngineShapeK()
+    # mblab_proxy = proxyengine.ProxyEngine()
 
     global loadedlib
     loadedlib = ml.PathDirectory()

@@ -21,10 +21,10 @@ import json
 
 import bpy
 from . import morphengine, skeletonengine, algorithms, materialengine
+from . import settings as s
 
 
 logger = logging.getLogger(__name__)
-
 
 class HumanModifier:
     __slots__ = ('name', 'obj_name', 'properties')
@@ -37,6 +37,7 @@ class HumanModifier:
         self.obj_name = obj_name
         self.properties = []
 
+    @algorithms.methodtimer
     def get_object(self):
         """
         Get the blender object. It can't be stored because
@@ -160,8 +161,8 @@ class Humanoid:
         self.has_data = False
         self.obj_name = ""
         self.data_path = algorithms.get_data_path()
-        self.characters_config = algorithms.get_configuration()
-        self.lib_filepath = algorithms.get_blendlibrary_path()
+        self.characters_config = algorithms.check_configuration()
+        self.lib_filepath = algorithms.check_blendlibrary_path()
         if self.characters_config:
             self.humanoid_types = self.build_items_list("character_list")
             self.template_types = self.build_items_list("templates_list")
@@ -325,13 +326,12 @@ class Humanoid:
             else:
                 logger.warning("Wrong name for morph: %s", morph_name)
 
+    @algorithms.methodtimer
     def reset_category(self, categ):
-        time1 = time.time()
         category = self.get_category(categ)
         for prop in category.get_all_properties():
             self.character_data[prop] = 0.5
         self.update_character(category_name=category.name, mode="update_all")
-        logger.info("Category resetted in %s secs", time.time()-time1)
 
     def exists_measure_database(self):
         return self.morph_engine.measures_database_exist
@@ -944,11 +944,12 @@ class Humanoid:
             value = 0.5
         return value
 
+    @algorithms.methodtimer
     def measure_fitting(self, wished_measures, mix=False):
         if not self.morph_engine.measures_database_exist:
             return
 
-        time1 = time.time()
+        # time1 = time.time()
         for relation in self.morph_engine.measures_relat_data:
             measure_name, modifier_name = relation[:2]
 
@@ -971,7 +972,7 @@ class Humanoid:
                                     measure_name, wish_measure, modifier, prop)
                         self.combine_morphings(modifier)
 
-        logger.info("Measures fitting in %s secs", time.time()-time1)
+        # logger.info("Measures fitting in %s secs", time.time()-time1)
 
     def save_character(self, filepath, export_proportions=True, export_materials=True, export_metadata=True):
         logger.info("Exporting character to %s", algorithms.simple_path(filepath))
@@ -1006,6 +1007,7 @@ class Humanoid:
             output_file.close()
 
     def export_measures(self, filepath):
+        # TODO export measures to custom property?
         logger.info("Exporting measures to %s", algorithms.simple_path(filepath))
         obj = self.get_object()
         char_data = {"manuellab_vers": self.lab_vers, "measures": dict()}

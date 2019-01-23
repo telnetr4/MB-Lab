@@ -23,13 +23,17 @@ import json
 import array
 import mathutils
 import bpy
+from functools import wraps
+from pathlib import Path
+import timeit
 
 from .utils import get_object_parent
 from . import settings as s
+from . import multiloading as ml
 
 logger = logging.getLogger(__name__)
 
-DEBUG_LEVEL = s.DEBUG_LEVEL
+DEBUG_LEVEL = 0
 
 
 def print_log_report(level, text_to_write):
@@ -43,6 +47,32 @@ def print_log_report(level, text_to_write):
         print(level + ": " + text_to_write)
 
 
+def methodtimer(f):
+    @wraps(f)
+    def wrap(*args, **kw):
+        ts = time.time()
+        result = f(*args, **kw)
+        te = time.time()
+        logger.info("{0} took {1}s to run".format(f.__name__, te - ts))
+        return result
+    # if f:
+    #     return _timing(f)
+    return wrap
+
+
+def logreturn(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        result = f(*args, **kwargs)
+        logger.debug("{0} returned {1} of type {2}".format(
+            f.__name__,
+            str(result),
+            type(result)
+        ))
+        return result
+    return wrap
+
+
 def is_writeable(filepath):
     try:
         with open(filepath, 'w'):
@@ -51,35 +81,45 @@ def is_writeable(filepath):
         logger.warning("Writing permission denied for %s", filepath)
     return False
 
-
+# TODO make new method on init that checks if data folder exists /
+#  instead of "check EVERY time ALWAYS and FOREVER" stuff. /
+#  unnecessary and confuses things, imho
 def get_data_path():
-    addon_directory = os.path.dirname(os.path.realpath(__file__))
-    data_dir = os.path.join(addon_directory, "data")
+    import warnings
+    warnings.warn("deprecated, just use s.data_path instead", DeprecationWarning)
+    data_dir = s.data_path
     logger.info("Looking for the retarget data in the folder %s...", simple_path(data_dir))
 
-    if not os.path.isdir(data_dir):
+    if not data_dir.exists():
         logger.critical("Tools data not found. Please check your Blender addons directory.")
         return None
 
     return data_dir
 
 
-def get_configuration():
-    data_path = get_data_path()
+@logreturn
+def check_configuration():
+    data_path = s.data_path
+    logger.info("Getting Configurations")
 
-    if data_path:
-        configuration_path = os.path.join(data_path, "characters_config.json")
-        if os.path.isfile(configuration_path):
-            return load_json_data(configuration_path, "Characters definition")
-
-    logger.critical("Configuration database not found. Please check your Blender addons directory.")
+    # if data_path.exists():  # YOU JUST NEED TO CHECK ONCE.
+    # IF IT'S NOT THERE ON STARTUP, YOU CAN ASSUME IT'S NOT GOING TO BE THERE EVER.
+    # TODO: add projmod
+    configuration_path = data_path / "characters_config.json"
+    if configuration_path.is_file():
+        return load_json_data(configuration_path, "Characters definition")
+    else:
+        logger.critical("Configuration database not found. Please check your Blender addons directory.")
+    # else:
+    #     logger.critical("Configuration database not found. Please check your Blender addons directory.")
     return None
 
 
-def get_blendlibrary_path():
-    data_path = get_data_path()
+def check_blendlibrary_path():
+    data_path = s.data_path
     if data_path:
-        return os.path.join(data_path, "humanoid_library.blend")
+        # TODO: add Projmod
+        return data_path / "humanoid_library.blend"
 
     logger.critical("Models library not found. Please check your Blender addons directory.")
     return None
@@ -89,13 +129,22 @@ def simple_path(input_path, use_basename=True, max_len=50):
     """
     Return the last part of long paths
     """
-    if use_basename:
-        return os.path.basename(input_path)
+    if type(input_path) is str:
+        import warnings
+        warnings.warn("str for paths is depreciated. Use Path from pathlib instead")
+        if use_basename:
+            return os.path.basename(input_path)
 
-    if len(input_path) > max_len:
-        return f"[Trunked]..{input_path[len(input_path)-max_len:]}"
+        if len(input_path) > max_len:
+            return f"[Trunked]..{input_path[len(input_path)-max_len:]}"
 
-    return input_path
+        return input_path
+    else:
+        if use_basename:
+            return input_path.name
+        else:
+            if len(str(input_path)) > max_len:
+                return f"[Trunked]..{str(input_path)[str(len(input_path)) - max_len:]}"
 
 
 def json_booleans_to_python(value):
@@ -123,16 +172,13 @@ def full_dist(vert1, vert2, axis="ALL"):
 
 def exists_database(lib_path):
     result = False
-    if simple_path(lib_path) != "":
-        if os.path.isdir(lib_path):
-            if os.listdir(lib_path):
-                for database_file in os.listdir(lib_path):
-                    _, extension = os.path.splitext(database_file)
-                    if "json" in extension or "bvh" in extension:
-                        result = True
-                    else:
-                        logger.warning("Unknow file extension in %s", simple_path(lib_path))
-
+    if lib_path.is_dir():
+        for database_file in os.listdir(str(lib_path)):
+            _, extension = os.path.splitext(str(lib_path))
+            if "json" in extension or "bvh" in extension:
+                result = True
+            else:
+                logger.warning("Unknown file extension in %s", simple_path(str(lib_path)))
         else:
             logger.warning("data path %s not found", simple_path(lib_path))
     return result
@@ -844,7 +890,7 @@ def identify_template(obj):
         if obj.type == 'MESH':
             verts = obj.data.vertices
             polygons = obj.data.polygons
-            config_data = get_configuration()
+            config_data = check_configuration()
             # TODO error messages
             if verts and polygons:
                 for template in config_data["templates_list"]:
@@ -857,7 +903,7 @@ def identify_template(obj):
 
 def get_template_model(obj):
     template = identify_template(obj)
-    config_data = get_configuration()
+    config_data = check_configuration()
     if template:
         return config_data[template]["template_model"]
     return None
@@ -865,7 +911,7 @@ def get_template_model(obj):
 
 def get_template_polygons(obj):
     template = identify_template(obj)
-    config_data = get_configuration()
+    config_data = check_configuration()
     if template:
         return config_data[template]["template_polygons"]
     return None
