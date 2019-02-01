@@ -1444,6 +1444,7 @@ class ExpressionEngineShapeK:
 # TODO ml
     def load_expression_database(self, dirpath):
         expressions_data = {}
+        logger.debug("load_expression_database dirpath: %s",str(dirpath))
         if algorithms.exists_database(dirpath):
             for expression_filename in os.listdir(dirpath):
                 expression_filepath = os.path.join(dirpath, expression_filename)

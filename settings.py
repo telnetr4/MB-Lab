@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 settings_path = Path(__file__)
 data_path = settings_path.parents[0] / "data"
 
+characters_config = None
+
 def init(context):
     from . import humanoid, animationengine, proxyengine
     from . import multiloading as ml

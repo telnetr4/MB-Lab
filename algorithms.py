@@ -48,6 +48,12 @@ def print_log_report(level, text_to_write):
 
 
 def methodtimer(f):
+    """
+    A wrapper that logs the execution time of function f
+    Usage:
+    @methodtimer
+    def function_name(args)
+    """
     @wraps(f)
     def wrap(*args, **kw):
         ts = time.time()
@@ -61,6 +67,12 @@ def methodtimer(f):
 
 
 def logreturn(f):
+    """
+    A wrapper that logs what a function returns
+    Usage:
+    @logreturn
+    def function_name(args)
+    """
     @wraps(f)
     def wrap(*args, **kwargs):
         result = f(*args, **kwargs)
@@ -73,6 +85,26 @@ def logreturn(f):
     return wrap
 
 
+def logreturnlistindic(f):
+    """
+    A wrapper that logs items in a list that the function returned
+        Usage:
+    @logreturnlistindic
+    def function_name(args)
+    """
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        result = f(*args, **kwargs)
+        logger.debug("== logreturnlistindic of {0} ==:".format(f.__name__))
+        for x in result:
+            logger.debug("{0}".format(x))
+            for y in result[x]:
+                logger.debug("    {0}".format(y))
+        logger.debug("++ logreturnlistindic of {0} END ++\n:".format(f.__name__))
+        return result
+    return wrap
+
+
 def is_writeable(filepath):
     try:
         with open(filepath, 'w'):
@@ -81,38 +113,37 @@ def is_writeable(filepath):
         logger.warning("Writing permission denied for %s", filepath)
     return False
 
-# TODO make new method on init that checks if data folder exists /
-#  instead of "check EVERY time ALWAYS and FOREVER" stuff. /
-#  unnecessary and confuses things, imho
+
+# TODO make new method on init that checks if data folder exists just once(?)
 def get_data_path():
     import warnings
-    warnings.warn("deprecated, just use s.data_path instead", DeprecationWarning)
-    data_dir = s.data_path
-    logger.info("Looking for the retarget data in the folder %s...", simple_path(data_dir))
-
-    if not data_dir.exists():
+    if not s.data_path.exists():
         logger.critical("Tools data not found. Please check your Blender addons directory.")
         return None
+    else:
+        warnings.warn("deprecated, just use s.data_path instead", DeprecationWarning)
+        logger.info("Looking for the retarget data in the folder %s...", simple_path(s.data_path))
+        return s.data_path
 
-    return data_dir
 
-
-@logreturn
+@logreturnlistindic
 def check_configuration():
+    # TODO: add Projmod
+    # Should only be run once, probably
     data_path = s.data_path
     logger.info("Getting Configurations")
-
-    # if data_path.exists():  # YOU JUST NEED TO CHECK ONCE.
-    # IF IT'S NOT THERE ON STARTUP, YOU CAN ASSUME IT'S NOT GOING TO BE THERE EVER.
-    # TODO: add projmod
     configuration_path = data_path / "characters_config.json"
-    if configuration_path.is_file():
-        return load_json_data(configuration_path, "Characters definition")
+    if s.characters_config is None:
+        if configuration_path.is_file():
+            logger.debug("Characters_config global value set")
+            s.characters_config = load_json_data(configuration_path, "Characters definition")
+            return s.characters_config
+        else:
+            logger.critical("Configuration database not found. Please check your Blender addons directory.")
+            return None
     else:
-        logger.critical("Configuration database not found. Please check your Blender addons directory.")
-    # else:
-    #     logger.critical("Configuration database not found. Please check your Blender addons directory.")
-    return None
+        logger.warning("You can just use settings.characters_config (usually s.characters_config).")
+        return s.characters_config
 
 
 def check_blendlibrary_path():
@@ -125,23 +156,26 @@ def check_blendlibrary_path():
     return None
 
 
-def simple_path(input_path, use_basename=True, max_len=50):
+def simple_path(input_path, use_basename=True, max_len=0):
     """
-    Return the last part of long paths
+    Return the last part of long paths. 2nd and 3rd arguments shouldn't be used much, if at all.
     """
     if type(input_path) is str:
+        if max_len <= 0:
+            max_len = 50
         import warnings
-        warnings.warn("str for paths is depreciated. Use Path from pathlib instead")
+        warnings.warn("Using str for paths is depreciated. Use Path(*pathsegments) from pathlib instead",DeprecationWarning)
         if use_basename:
             return os.path.basename(input_path)
-
         if len(input_path) > max_len:
             return f"[Trunked]..{input_path[len(input_path)-max_len:]}"
-
         return input_path
     else:
         if use_basename:
-            return input_path.name
+            if max_len <= 0:
+                return input_path.relative_to(s.data_path)
+            else:
+                return input_path.name
         else:
             if len(str(input_path)) > max_len:
                 return f"[Trunked]..{str(input_path)[str(len(input_path)) - max_len:]}"
@@ -171,16 +205,24 @@ def full_dist(vert1, vert2, axis="ALL"):
 
 
 def exists_database(lib_path):
+    # TODO: add Projmod
     result = False
+    logger.debug("====== exists_database: %s ======", str(lib_path.relative_to(s.data_path)))
     if lib_path.is_dir():
-        for database_file in os.listdir(str(lib_path)):
-            _, extension = os.path.splitext(str(lib_path))
-            if "json" in extension or "bvh" in extension:
-                result = True
-            else:
-                logger.warning("Unknown file extension in %s", simple_path(str(lib_path)))
-        else:
-            logger.warning("data path %s not found", simple_path(lib_path))
+        unexpectedfile = False
+        for f in lib_path.glob("**/*.*"):
+            logger.debug("exists_database: %s", str(f))
+            if not (f.match('*.json') or f.match('*.bvh')):
+                unexpectedfile = True
+                logger.warning("Unknown file extension %s in %s", f.suffix, simple_path(lib_path))
+        # for database_file in os.listdir(str(lib_path)):
+        #     _, extension = os.path.splitext(str(lib_path))
+        #     if "json" in extension or "bvh" in extension:
+        #         result = True
+        #     else:
+    else:
+        logger.warning("data path %s not found", simple_path(lib_path))
+        logger.debug("++++++ exists_database: %s END ++++++\n", str(lib_path.relative_to(s.data_path)))
     return result
 
 
@@ -890,6 +932,7 @@ def identify_template(obj):
         if obj.type == 'MESH':
             verts = obj.data.vertices
             polygons = obj.data.polygons
+            # TODO: add Projmod: templates_list
             config_data = check_configuration()
             # TODO error messages
             if verts and polygons:
@@ -1404,7 +1447,7 @@ def import_object_from_lib(lib_filepath, name, final_name=None, stop_import=True
 def append_object_from_library(lib_filepath, obj_names, suffix=None):
 
     try:
-        with bpy.data.libraries.load(lib_filepath) as (data_from, data_to):
+        with bpy.data.libraries.load(str(lib_filepath)) as (data_from, data_to):
             if suffix:
                 names_to_append = [name for name in data_from.objects if suffix in name]
                 data_to.objects = names_to_append
@@ -1424,7 +1467,7 @@ def append_object_from_library(lib_filepath, obj_names, suffix=None):
 def append_mesh_from_library(lib_filepath, mesh_names, suffix=None):
 
     try:
-        with bpy.data.libraries.load(lib_filepath) as (data_from, data_to):
+        with bpy.data.libraries.load(str(lib_filepath)) as (data_from, data_to):
             if suffix:
                 names_to_append = [name for name in data_from.meshes if suffix in name]
                 data_to.meshes = names_to_append
@@ -1437,7 +1480,7 @@ def append_mesh_from_library(lib_filepath, mesh_names, suffix=None):
 
 def read_object_names_from_library(lib_filepath):
     try:
-        with bpy.data.libraries.load(lib_filepath) as (data_from, data_to):
+        with bpy.data.libraries.load(str(lib_filepath)) as (data_from, data_to):
             for name in data_from.objects:
                 print("OBJ_LIB: ", name)
     except OSError:

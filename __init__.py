@@ -29,7 +29,6 @@ from . import humanoid, animationengine, proxyengine
 from . import utils
 from . import algorithms
 from . import settings as s
-from . import settings as s
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ bl_info = {
     "category": "Characters"
 }
 
-
+logger.debug(s.data_path)
 mblab_humanoid = humanoid.Humanoid(bl_info["version"])
 mblab_retarget = animationengine.RetargetEngine()
 mblab_shapekeys = animationengine.ExpressionEngineShapeK()
@@ -75,7 +74,7 @@ def start_lab_session():
     if scn.mblab_use_muscle and scn.mblab_use_ik:
         rigging_type = "muscle_ik"
 
-    # TODO projmod blendfile goes here
+    # TODO projmod blendfile indexer goes here(?)
     lib_filepath = algorithms.check_blendlibrary_path()
 
     obj = None

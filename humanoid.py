@@ -22,9 +22,11 @@ import json
 import bpy
 from . import morphengine, skeletonengine, algorithms, materialengine
 from . import settings as s
+from pathlib import Path
 
 
 logger = logging.getLogger(__name__)
+
 
 class HumanModifier:
     __slots__ = ('name', 'obj_name', 'properties')
@@ -160,7 +162,6 @@ class Humanoid:
         self.lab_vers = list(lab_version)
         self.has_data = False
         self.obj_name = ""
-        self.data_path = algorithms.get_data_path()
         self.characters_config = algorithms.check_configuration()
         self.lib_filepath = algorithms.check_blendlibrary_path()
         if self.characters_config:
@@ -201,16 +202,16 @@ class Humanoid:
         self.phenotype_data_folder = self.characters_config[character_identifier]["name"]+"_ptypes"
         self.presets_data_folder = self.characters_config[character_identifier]["presets_folder"]
 
-        self.phenotypes_path = os.path.join(self.data_path, "phenotypes", self.phenotype_data_folder)
-        self.presets_path = os.path.join(self.data_path, "presets", self.presets_data_folder)
-        self.restposes_path = os.path.join(self.data_path, "poses", "rest_poses")
+        self.phenotypes_path = s.data_path / "phenotypes" / self.phenotype_data_folder
+        self.presets_path = s.data_path /  "presets" / self.presets_data_folder
+        self.restposes_path = s.data_path /  "poses" / "rest_poses"
 
-        self.transformations_data_path = os.path.join(self.data_path, "transformations", self.transformation_filename)
+        self.transformations_data_path = s.data_path /  "transformations" / self.transformation_filename
 
-        self.exists_rest_poses_data = algorithms.exists_database(self.restposes_path)
-        self.exists_preset_data = algorithms.exists_database(self.presets_path)
-        self.exists_phenotype_data = algorithms.exists_database(self.phenotypes_path)
-        self.exists_transform_data = os.path.isfile(self.transformations_data_path)
+        self.exists_rest_poses_data = self.restposes_path.exists()
+        self.exists_preset_data = self.presets_path.exists()
+        self.exists_phenotype_data = self.phenotypes_path.exists()
+        self.exists_transform_data = self.transformations_data_path.is_file()
 
         self.corrective_modifier_name = "mbastlab_corrective_modifier"
         self.morph_engine = morphengine.MorphingEngine(self.obj_name, self.characters_config[character_identifier])
@@ -434,13 +435,9 @@ class Humanoid:
     def save_all_textures(self, filepath):
         targets = ("body_displ", "body_derm", "body_spec", "body_rough", "body_subd", "body_bump", "eyes_diffuse")
         for target in targets:
-            dir_path = os.path.dirname(filepath)
-            filename = os.path.basename(filepath)
-            filename_root = os.path.splitext(filename)[0]
-            filename_ext = os.path.splitext(filename)[1]
-            new_filename = filename_root + "_" + target + filename_ext
-            new_filepath = os.path.join(dir_path, new_filename)
-            self.mat_engine.save_texture(new_filepath, target)
+            dir_path = Path(filepath)
+            new_filepath = dir_path.with_name(dir_path.stem + "_" + target + dir_path.suffix)
+            self.mat_engine.save_texture(str(new_filepath), target)
 
     def save_backup_character(self, filepath):
 
@@ -1131,7 +1128,7 @@ class Humanoid:
 
     def load_obj_prototype(self, obj_name):
 
-        obj_path = os.path.join(self.data_path, "shared_objs", obj_name+".obj")
+        obj_path = s.data_path / "shared_objs" / obj_name + ".obj"
 
         bpy.ops.import_scene.obj(
             use_split_objects=False,
