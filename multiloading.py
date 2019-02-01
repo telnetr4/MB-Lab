@@ -7,13 +7,20 @@ from pathlib import Path, PurePath
 dr = s.data_path
 
 
-def namesofallconfig(configtype, inproject = "", seconddir = ""): # lists all json files in a specified project
+
+
+
+def namesofallconfig(configtype, inproject="", seconddir=""): # lists all json files in a specified project
     return namesofallfile("json", PurePath(inproject, configtype, seconddir))
 
 
-def namesofallfile(thefiletype, thepath="", filename="*"):
-    thepath = dr.glob('**/' + str(thepath) + '/' + filename + '.' + thefiletype)
+def namesofallfile(thefiletype, thepath=s.data_path, filename="*"):
+    thepath = dr.glob(str(thepath) + '/' + filename + '.' + thefiletype)
     return thepath
+
+
+def filetypeexistin(configtype,thepath=s.data_path,filename="*.json"):
+    return
 
 
 # TODO create projmodule config file reading?
