@@ -54,14 +54,14 @@ def add_rm_drivers(drivers, add=True):
     mesh = algorithms.get_active_body()
     mname = mesh.name
     for k, v in drivers.items():
-        shape_name = v['data_path'].strip('key_blocks["').strip('"].value')
+        shape_name = v['data_path_legacy'].strip('key_blocks["').strip('"].value')
         idx = bpy.data.objects[mname].data.shape_keys.key_blocks.find(shape_name)
         if idx == -1:
             logger.critical("%s shape key not found", shape_name)
             continue
         check = bpy.data.objects[mname].data.shape_keys.animation_data and \
             bpy.data.objects[mname].data.shape_keys.animation_data.drivers.\
-            find(v['data_path'])
+            find(v['data_path_legacy'])
         if check and add:
             logger.critical("%s shape key already has animation data", shape_name)
             continue

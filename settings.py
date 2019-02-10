@@ -1,10 +1,7 @@
 # import bpy
-# from os.path import join, getsize
-# import json
 # from bpy_extras.io_utils import ExportHelper, ImportHelper
 # from bpy.app.handlers import persistent
 from pathlib import Path
-import os
 import logging
 # from . import humanoid, animationengine, proxyengine
 # from . import bl_info
@@ -17,13 +14,19 @@ import logging
 logger = logging.getLogger(__name__)
 
 settings_path = Path(__file__)
+
+data_path_legacy = settings_path.parents[0] / "data_legacy"
+
 data_path = settings_path.parents[0] / "data"
+
+project_folders = []
 
 characters_config = None
 
+
 def init(context):
     from . import humanoid, animationengine, proxyengine
-    from . import multiloading as ml
+    from . import loading as ml
     from . import algorithms as a
 
     # global mblab_humanoid

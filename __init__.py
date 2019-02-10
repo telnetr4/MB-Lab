@@ -45,16 +45,20 @@ bl_info = {
     "category": "Characters"
 }
 
-logger.debug(s.data_path)
 mblab_humanoid = humanoid.Humanoid(bl_info["version"])
+logger.debug(">mblab_humanoid done")
 mblab_retarget = animationengine.RetargetEngine()
+logger.debug(">mblab_retarget done")
 mblab_shapekeys = animationengine.ExpressionEngineShapeK()
+logger.debug(">mblab_shapekeys done")
 mblab_proxy = proxyengine.ProxyEngine()
+logger.debug(">mblab_proxy done")
 
 gui_status = "NEW_SESSION"
 gui_err_msg = ""
 gui_active_panel = None
 gui_active_panel_fin = None
+logger.debug("Top of __init__ done")
 
 
 def start_lab_session():
@@ -339,7 +343,21 @@ def init_restposes_props(humanoid_instance):
             update=restpose_update)
 
 
+def init_poses_props(gender):
+    global mblab_retarget
+    if mblab_retarget.maleposes_exist:
+        if not hasattr(bpy.types.Object, 'male_pose'):
+            malepose_items = algorithms.generate_items_list(mblab_retarget.maleposes_path)
+            bpy.types.Object.male_pose = bpy.props.EnumProperty(
+                items=malepose_items,
+                name="Male pose",
+                default=malepose_items[0][0],
+                update=malepose_update)
+
+
 def init_maleposes_props():
+    import warnings
+    warnings.warn("Depreciated; Use init_poses_props(\"male\") instead.", DeprecationWarning)
     global mblab_retarget
     if mblab_retarget.maleposes_exist:
         if not hasattr(bpy.types.Object, 'male_pose'):
@@ -352,6 +370,8 @@ def init_maleposes_props():
 
 
 def init_femaleposes_props():
+    import warnings
+    warnings.warn("Depreciated; Use init_poses_props(\"female\") instead.", DeprecationWarning)
     global mblab_retarget
     if mblab_retarget.femaleposes_exist:
         if not hasattr(bpy.types.Object, 'female_pose'):
@@ -1481,7 +1501,7 @@ class ExpCharacter(bpy.types.Operator, ExportHelper):
     filter_glob: bpy.props.StringProperty(
         default="*.json",
         options={'HIDDEN'},
-    )
+        )
     bl_context = 'objectmode'
 
     def execute(self, context):

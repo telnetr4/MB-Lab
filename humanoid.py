@@ -22,7 +22,9 @@ import json
 import bpy
 from . import morphengine, skeletonengine, algorithms, materialengine
 from . import settings as s
+from . import utils as ut
 from pathlib import Path
+from . import loading as ml
 
 
 logger = logging.getLogger(__name__)
@@ -39,7 +41,7 @@ class HumanModifier:
         self.obj_name = obj_name
         self.properties = []
 
-    @algorithms.methodtimer
+    @ut.methodtimer
     def get_object(self):
         """
         Get the blender object. It can't be stored because
@@ -162,7 +164,7 @@ class Humanoid:
         self.lab_vers = list(lab_version)
         self.has_data = False
         self.obj_name = ""
-        self.characters_config = algorithms.check_configuration()
+        self.characters_config = ml.check_configuration()
         self.lib_filepath = algorithms.check_blendlibrary_path()
         if self.characters_config:
             self.humanoid_types = self.build_items_list("character_list")
@@ -202,11 +204,11 @@ class Humanoid:
         self.phenotype_data_folder = self.characters_config[character_identifier]["name"]+"_ptypes"
         self.presets_data_folder = self.characters_config[character_identifier]["presets_folder"]
 
-        self.phenotypes_path = s.data_path / "phenotypes" / self.phenotype_data_folder
-        self.presets_path = s.data_path /  "presets" / self.presets_data_folder
-        self.restposes_path = s.data_path /  "poses" / "rest_poses"
+        self.phenotypes_path = s.data_path_legacy / "phenotypes" / self.phenotype_data_folder
+        self.presets_path = s.data_path_legacy / "presets" / self.presets_data_folder
+        self.restposes_path = s.data_path_legacy / "poses" / "rest_poses"
 
-        self.transformations_data_path = s.data_path /  "transformations" / self.transformation_filename
+        self.transformations_data_path = s.data_path_legacy / "transformations" / self.transformation_filename
 
         self.exists_rest_poses_data = self.restposes_path.exists()
         self.exists_preset_data = self.presets_path.exists()
@@ -327,7 +329,7 @@ class Humanoid:
             else:
                 logger.warning("Wrong name for morph: %s", morph_name)
 
-    @algorithms.methodtimer
+    @ut.methodtimer
     def reset_category(self, categ):
         category = self.get_category(categ)
         for prop in category.get_all_properties():
@@ -941,7 +943,7 @@ class Humanoid:
             value = 0.5
         return value
 
-    @algorithms.methodtimer
+    @ut.methodtimer
     def measure_fitting(self, wished_measures, mix=False):
         if not self.morph_engine.measures_database_exist:
             return
@@ -1128,7 +1130,7 @@ class Humanoid:
 
     def load_obj_prototype(self, obj_name):
 
-        obj_path = s.data_path / "shared_objs" / obj_name + ".obj"
+        obj_path = s.data_path_legacy / "shared_objs" / obj_name + ".obj"
 
         bpy.ops.import_scene.obj(
             use_split_objects=False,

@@ -28,7 +28,7 @@ from .utils import get_active_armature
 from . import settings as s
 
 logger = logging.getLogger(__name__)
-data_path = s.data_path
+data_path = s.data_path_legacy
 
 class RetargetEngine:
 
@@ -36,11 +36,11 @@ class RetargetEngine:
         self.has_data = False
         self.femaleposes_exist = False
         self.maleposes_exist = False
-        # self.data_path = algorithms.get_data_path()  # Is there a reason for this?
+        # self.data_path_legacy = algorithms.get_data_path()  # Is there a reason for this?
         self.maleposes_path = data_path / "poses" / "male_poses"
         self.femaleposes_path = data_path / "poses" / "female_poses"
         self.maleposes_exist = self.maleposes_path.exists()
-        self.femaleposes_exist = self.femaleposes_path
+        self.femaleposes_exist = self.femaleposes_path.exists()
 
         self.body_name = ""
         self.armature_name = ""
@@ -59,7 +59,7 @@ class RetargetEngine:
             self.rot_type = ""
             self.has_data = True
         else:
-            logger.critical("Retarget database not found. Please check your Blender addons directory.")
+            logger.critical("Retarget database not found. l_f.e: {0} k_p.i_f: {1}".format(self.lib_filepath.exists(), self.knowledge_path.relative_to(s.data_path_legacy)))
 
     @staticmethod
     def get_selected_posebone():
@@ -89,6 +89,12 @@ class RetargetEngine:
         if target_armature and target_armature.animation_data:
             return target_armature.animation_data.action
         return None
+
+    def getgenderpath(self,gender):
+        if gender == "male":
+            return self.maleposes_path
+        if gender == "female":
+            return self.femaleposes_path
 
     def check_correction_sync(self):
         scn = bpy.context.scene
@@ -1393,11 +1399,11 @@ class ExpressionEngineShapeK:
 
     def __init__(self):
         self.has_data = False
-        # self.data_path = algorithms.get_data_path()
+        # self.data_path_legacy = algorithms.get_data_path()
         # TODO rewrite expressions to allow for n number of expression sets
-        self.human_expression_path = s.data_path / "expressions_comb" / "human_expressions"
+        self.human_expression_path = s.data_path_legacy / "expressions_comb" / "human_expressions"
 
-        self.anime_expression_path = s.data_path / "expressions_comb" / "anime_expressions"
+        self.anime_expression_path = s.data_path_legacy / "expressions_comb" / "anime_expressions"
 
         self.expressions_labels = set()
         self.human_expressions_data = self.load_expression_database(self.human_expression_path)
@@ -1420,7 +1426,7 @@ class ExpressionEngineShapeK:
                     self.model_type = "ANIME"
                     return
 
-# TODO ml
+# TODO load
     @staticmethod
     def load_expression(filepath):
 
@@ -1441,7 +1447,7 @@ class ExpressionEngineShapeK:
 
         return char_data
 
-# TODO ml
+# TODO load
     def load_expression_database(self, dirpath):
         expressions_data = {}
         logger.debug("load_expression_database dirpath: %s",str(dirpath))
