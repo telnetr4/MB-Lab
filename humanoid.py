@@ -1145,7 +1145,7 @@ class Humanoid:
         values = []
         for prop in modifier.properties:
             val = self.character_data[prop]
-            # #TODO: Add option to "remove realism"
+            #TODO: Add option to "remove realism"
             if safe_mode:
                 if val > 1.0:
                     val = 1.0
