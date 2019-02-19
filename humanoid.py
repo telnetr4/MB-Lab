@@ -584,7 +584,7 @@ class Humanoid:
         time1 = time.time() #TODO: usare obj.keys per lavorare solo sui valory applicati
         logger.info("Deleting custom properties")
         obj = self.get_object()
-        props_to_delete = set(["manuellab_vers", "mblab_use_inch","manuellab_rig"])
+        props_to_delete = set(["manuellab_vers", "mblab_use_inch", "manuellab_rig"])
         for category in self.get_categories():
             for modifier in category.get_modifiers():
                 for prop in modifier.get_properties():
@@ -1137,7 +1137,7 @@ class Humanoid:
         self.mat_engine.load_texture(filepath, "body_displ")
 
 
-    def combine_morphings(self, modifier, refresh_only=False, add_vertices_to_update=True):
+    def combine_morphings(self, modifier, refresh_only=False, add_vertices_to_update=True, safe_mode = False):
         """
         Mix shapekeys using smart combo algorithm.
         """
@@ -1145,10 +1145,12 @@ class Humanoid:
         values = []
         for prop in modifier.properties:
             val = self.character_data[prop]
-            if val > 1.0:
-                val = 1.0
-            if val < 0:
-                val = 0
+            # #TODO: Add option to "remove realism"
+            if safe_mode:
+                if val > 1.0:
+                    val = 1.0
+                if val < 0:
+                    val = 0
             val1 = algorithms.function_modifier_a(val)
             val2 = algorithms.function_modifier_b(val)
             values.append([val1, val2])

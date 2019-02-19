@@ -210,7 +210,7 @@ class MorphingEngine:
         time1 = time.time()
         if measure_name:
             if measure_name in self.measures_data:
-                indices =  self.measures_data[measure_name]
+                indices = self.measures_data[measure_name]
                 axis = measure_name[-1]
                 return algorithms.length_of_strip(vert_coords, indices, axis)
         else:
