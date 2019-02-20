@@ -38,7 +38,7 @@ def get_deforming_armature(obj):
 
 
 def get_active_armature():
-    active_obj = bpy.context.view_layer.objects.active
+    active_obj = bpy.context.scene.objects.active
     parent_object = get_object_parent(active_obj)
     if active_obj:
         if active_obj.type == 'ARMATURE':

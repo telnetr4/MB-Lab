@@ -35,7 +35,7 @@ bl_info = {
     "name": "MB-Lab",
     "author": "Manuel Bastioni",
     "version": (1, 7, 2),
-    "blender": (2, 80, 0),
+    "blender": (2, 79, 0),
     "location": "View3D > Tools > MB-Lab",
     "description": "A complete lab for character creation",
     "warning": "",
@@ -105,11 +105,8 @@ def start_lab_session():
         if mblab_humanoid.has_data:
             gui_status = "ACTIVE_SESSION"
 
-            if scn.mblab_use_cycles or scn.mblab_use_eevee:
-                if scn.mblab_use_cycles:
-                    scn.render.engine = 'CYCLES'
-                else:
-                    scn.render.engine = 'BLENDER_EEVEE'
+            if scn.mblab_use_cycles:
+                scn.render.engine = 'CYCLES'
                 if scn.mblab_use_lamps:
                     algorithms.import_object_from_lib(lib_filepath, "Lamp_back_bottom")
                     algorithms.import_object_from_lib(lib_filepath, "Lamp_back_up")
@@ -117,7 +114,7 @@ def start_lab_session():
                     algorithms.import_object_from_lib(lib_filepath, "Lamp_right")
                     #algorithms.append_object_from_library(lib_filepath, [], "Lamp_")
             else:
-                scn.render.engine = 'BLENDER_WORKBENCH'
+                scn.render.engine = 'BLENDER_RENDER'
 
             logger.info("Rendering engine now is %s", scn.render.engine)
             init_morphing_props(mblab_humanoid)
@@ -208,16 +205,6 @@ def tone_update(self, context):
 
 def modifiers_update(self, context):
     sync_character_to_props()
-
-
-def set_cycles_render_engine(self, context):
-    if context.scene.mblab_use_cycles:
-        context.scene.mblab_use_eevee = False
-
-
-def set_eevee_render_engine(self, context):
-    if context.scene.mblab_use_eevee:
-        context.scene.mblab_use_cycles = False
 
 
 def preset_update(self, context):
@@ -565,14 +552,8 @@ bpy.types.Scene.mblab_remove_all_modifiers = bpy.props.BoolProperty(
 bpy.types.Scene.mblab_use_cycles = bpy.props.BoolProperty(
     name="Use Cycles materials (needed for skin shaders)",
     default=True,
-    update=set_cycles_render_engine,
     description="This is needed in order to use the skin editor and shaders (highly recommended)")
 
-bpy.types.Scene.mblab_use_eevee = bpy.props.BoolProperty(
-    name="Use EEVEE materials (needed for skin shaders)",
-    default=False,
-    update=set_eevee_render_engine,
-    description="This is needed in order to use the skin editor and shaders")
 
 bpy.types.Scene.mblab_use_lamps = bpy.props.BoolProperty(
     name="Use portrait studio lights (recommended)",
@@ -1239,7 +1220,7 @@ class FinalizeCharacterAndImages(bpy.types.Operator, ExportHelper):
     bl_label = 'Finalize with textures and backup'
     bl_idname = 'mbast.finalize_character_and_images'
     filename_ext = ".png"
-    filter_glob: bpy.props.StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.png",
         options={'HIDDEN'},
     )
@@ -1424,7 +1405,7 @@ class ExpDisplacementImage(bpy.types.Operator, ExportHelper):
     bl_idname = "mbast.export_dispimage"
     bl_label = "Save displacement map"
     filename_ext = ".png"
-    filter_glob: bpy.props.StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.png",
         options={'HIDDEN'},
     )
@@ -1441,7 +1422,7 @@ class ExpDermalImage(bpy.types.Operator, ExportHelper):
     bl_idname = "mbast.export_dermimage"
     bl_label = "Save dermal map"
     filename_ext = ".png"
-    filter_glob: bpy.props.StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.png",
         options={'HIDDEN'},
     )
@@ -1458,7 +1439,7 @@ class ExpAllImages(bpy.types.Operator, ExportHelper):
     bl_idname = "mbast.export_allimages"
     bl_label = "Export all maps"
     filename_ext = ".png"
-    filter_glob: bpy.props.StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.png",
         options={'HIDDEN'},
     )
@@ -1475,7 +1456,7 @@ class ExpCharacter(bpy.types.Operator, ExportHelper):
     bl_idname = "mbast.export_character"
     bl_label = "Export character"
     filename_ext = ".json"
-    filter_glob: bpy.props.StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.json",
         options={'HIDDEN'},
     )
@@ -1493,7 +1474,7 @@ class ExpMeasures(bpy.types.Operator, ExportHelper):
     bl_idname = "mbast.export_measures"
     bl_label = "Export measures"
     filename_ext = ".json"
-    filter_glob: bpy.props.StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.json",
         options={'HIDDEN'},
     )
@@ -1510,7 +1491,7 @@ class ImpCharacter(bpy.types.Operator, ImportHelper):
     bl_idname = "mbast.import_character"
     bl_label = "Import character"
     filename_ext = ".json"
-    filter_glob: bpy.props.StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.json",
         options={'HIDDEN'},
     )
@@ -1528,7 +1509,7 @@ class ImpMeasures(bpy.types.Operator, ImportHelper):
     bl_idname = "mbast.import_measures"
     bl_label = "Import measures"
     filename_ext = ".json"
-    filter_glob: bpy.props.StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.json",
         options={'HIDDEN'},
     )
@@ -1545,7 +1526,7 @@ class LoadDermImage(bpy.types.Operator, ImportHelper):
     bl_idname = "mbast.import_dermal"
     bl_label = "Load dermal map"
     filename_ext = ".png"
-    filter_glob: bpy.props.StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.png",
         options={'HIDDEN'},
     )
@@ -1562,7 +1543,7 @@ class LoadDispImage(bpy.types.Operator, ImportHelper):
     bl_idname = "mbast.import_displacement"
     bl_label = "Load displacement map"
     filename_ext = ".png"
-    filter_glob: bpy.props.StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.png",
         options={'HIDDEN'},
     )
@@ -1654,7 +1635,7 @@ class SaveRestPose(bpy.types.Operator, ExportHelper):
     bl_idname = "mbast.restpose_save"
     bl_label = "Save custom rest pose"
     filename_ext = ".json"
-    filter_glob: bpy.props.StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.json",
         options={'HIDDEN'},
     )
@@ -1672,7 +1653,7 @@ class LoadRestPose(bpy.types.Operator, ImportHelper):
     bl_idname = "mbast.restpose_load"
     bl_label = "Load custom rest pose"
     filename_ext = ".json"
-    filter_glob: bpy.props.StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.json",
         options={'HIDDEN'},
     )
@@ -1690,7 +1671,7 @@ class SavePose(bpy.types.Operator, ExportHelper):
     bl_idname = "mbast.pose_save"
     bl_label = "Save pose"
     filename_ext = ".json"
-    filter_glob: bpy.props.StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.json",
         options={'HIDDEN'},
     )
@@ -1708,7 +1689,7 @@ class LoadPose(bpy.types.Operator, ImportHelper):
     bl_idname = "mbast.pose_load"
     bl_label = "Load pose"
     filename_ext = ".json"
-    filter_glob: bpy.props.StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.json",
         options={'HIDDEN'},
     )
@@ -1740,7 +1721,7 @@ class LoadBvh(bpy.types.Operator, ImportHelper):
     bl_label = "Load animation (bvh)"
     filename_ext = ".bvh"
     bl_description = 'Import the animation from a bvh motion capture file'
-    filter_glob: bpy.props.StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.bvh",
         options={'HIDDEN'},
     )
@@ -1823,7 +1804,7 @@ class VIEW3D_PT_tools_ManuelbastioniLAB(bpy.types.Panel):
     bl_label = "MB-Lab {0}.{1}.{2}".format(bl_info["version"][0], bl_info["version"][1], bl_info["version"][2])
     bl_idname = "OBJECT_PT_characters01"
     bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
+    bl_region_type = 'TOOLS'
     #bl_context = 'objectmode'
     bl_category = "MB-Lab"
 
@@ -1855,8 +1836,7 @@ class VIEW3D_PT_tools_ManuelbastioniLAB(bpy.types.Panel):
                 self.layout.prop(scn, 'mblab_use_muscle')
 
             self.layout.prop(scn, 'mblab_use_cycles')
-            self.layout.prop(scn, 'mblab_use_eevee')
-            if scn.mblab_use_cycles or scn.mblab_use_eevee:
+            if scn.mblab_use_cycles:
                 self.layout.prop(scn, 'mblab_use_lamps')
             self.layout.operator('mbast.init_character')
 
@@ -2138,9 +2118,9 @@ class VIEW3D_PT_tools_ManuelbastioniLAB(bpy.types.Panel):
 
                     box = self.layout.box()
                     box.enabled = True
-                    if scn.render.engine != 'CYCLES' and scn.render.engine != 'BLENDER_EEVEE':
+                    if scn.render.engine != 'CYCLES':
                         box.enabled = False
-                        box.label(text="Skin editor requires Cycles or EEVEE", icon='INFO')
+                        box.label(text="Skin editor requires Cycles", icon='INFO')
 
                     if mblab_humanoid.exists_displace_texture():
                         box.operator("mbast.skindisplace_calculate")

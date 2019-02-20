@@ -52,7 +52,7 @@ def populate_modifiers(modifiers, mlist):
             populate_modifier(mod, m)
 
 def populate_variable(v, var):
-    face_rig = bpy.data.objects[var['targets'][0]['id_name']]
+    face_rig = bpy.data.objects.get(var['targets'][0]['id_name'])
 
     v.name = var['name']
     v.type = var['type']
@@ -159,7 +159,7 @@ def recursive_collection_delete(head):
 
     for obj in head.all_objects:
         obj.hide_select = False
-        obj.select_set(True)
+        obj.select = True
     bpy.ops.object.delete()
 
     bpy.data.collections.remove(head)
@@ -194,11 +194,11 @@ def delete_face_rig():
     orig_selection = {}
     for ob in bpy.context.scene.objects:
         orig_selection[ob.name] = ob.select_get()
-        ob.select_set(False)
+        ob.select = False
 
     # delete the face rig
-    facerig.select_set(True)
-    phoneme.select_set(True)
+    facerig.select = True
+    phoneme.select = True
     bpy.ops.object.delete()
     c = bpy.data.collections.get('Face_Rig')
     if c:

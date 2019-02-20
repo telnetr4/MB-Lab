@@ -238,7 +238,7 @@ class Humanoid:
 
         logger.info("Loaded {0} categories from morph database".format(
             len(self.categories)))
-        bpy.context.view_layer.objects.active = obj
+        bpy.context.scene.objects.active = obj
         self.measures = self.morph_engine.measures
         self.delta_measures = {}
         self.init_delta_measures()

@@ -132,9 +132,9 @@ class RetargetEngine:
         if armat:
             action = self.get_action(armat)
             if action and bone:
-                d_path1 = f'pose.bones["{bone.name}"].rotation_quaternion'
-                d_path2 = f'pose.bones["{bone.name}"].rotation_axis_angle'
-                d_path3 = f'pose.bones["{bone.name}"].rotation_euler'
+                d_path1 = 'pose.bones["{0}"].rotation_quaternion'.format(bone.name)
+                d_path2 = 'pose.bones["{0}"].rotation_axis_angle'.format(bone.name)
+                d_path3 = 'pose.bones["{0}"].rotation_euler'.format(bone.name)
 
                 animation_curve1 = action.fcurves.find(d_path1, 0)
                 animation_curve2 = action.fcurves.find(d_path2, 0)
@@ -154,9 +154,9 @@ class RetargetEngine:
 
     def get_bone_curve_id(self, selected_bone):
         if self.rot_type == "QUATERNION":
-            return f'pose.bones["{selected_bone.name}"].rotation_quaternion'
+            return 'pose.bones["{0}"].rotation_quaternion'.format(selected_bone.name)
         if self.rot_type == "EULER":
-            return f'pose.bones["{selected_bone.name}"].rotation_euler'
+            return 'pose.bones["{0}"].rotation_euler'.format(selected_bone.name)
         return None
 
     def get_curve_data(self, channel):
@@ -170,7 +170,7 @@ class RetargetEngine:
                     d_path = self.get_bone_curve_id(selected_bone)
                     if d_path:
                         animation_curve = action.fcurves.find(d_path, channel)
-                        animation_data_id = f'{d_path}{str(channel)}'
+                        animation_data_id = d_path+str(channel)
                         if animation_curve:
                             return (armat.name, animation_curve, animation_data_id)
         return (None, None, None)
@@ -278,8 +278,8 @@ class RetargetEngine:
         for b_id in bone_identifiers:
             for s_id in side_id:
                 for junct in junctions:
-                    combinations.append(f'{b_id}{junct}{s_id}')
-                    combinations.append(f'{s_id}{junct}{b_id}')
+                    combinations.append(b_id+junct+s_id)
+                    combinations.append(s_id+junct+b_id)
 
         return combinations
 
@@ -373,8 +373,8 @@ class RetargetEngine:
         combo_bones_end = []
 
         for b_id in bone_ids:
-            combo_bones_start.append(f'{bn_pos}{b_id}')
-            combo_bones_end.append(f'{b_id}{bn_pos}')
+            combo_bones_start.append(bn_pos + b_id)
+            combo_bones_end.append(b_id + bn_pos)
 
         return combo_bones_start, combo_bones_end
 
@@ -1508,10 +1508,10 @@ class ExpressionEngineShapeK:
 
                 sk_value = 0
                 if value < 0.5:
-                    name = f"{name}_min"
+                    name = "{0}_min".format(name)
                     sk_value = (0.5 - value) * 2
                 else:
-                    name = f"{name}_max"
+                    name = "{0}_max".format(name)
                     sk_value = (value - 0.5) * 2
 
                 sk_value = sk_value*express_val
@@ -1534,7 +1534,7 @@ class ExpressionEngineShapeK:
             expr_data = self.expressions_data[expression_name]
 
             for name, value in expr_data.items():
-                name = f"{name}_min" if value < 0.5 else f"{name}_max"
+                name = "{0}_min".format(name) if value < 0.5 else "{0}_max".format(name)
 
                 if hasattr(obj.data.shape_keys, 'key_blocks'):
                     if name in obj.data.shape_keys.key_blocks:

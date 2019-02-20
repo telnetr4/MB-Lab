@@ -93,7 +93,7 @@ def simple_path(input_path, use_basename=True, max_len=50):
         return os.path.basename(input_path)
 
     if len(input_path) > max_len:
-        return f"[Trunked]..{input_path[len(input_path)-max_len:]}"
+        return "[Trunked]..{0}".format({input_path[len(input_path)-max_len:]})
 
     return input_path
 
@@ -732,7 +732,7 @@ def get_object_materials(obj):
 def select_and_change_mode(obj, obj_mode):
     deselect_all_objects()
     if obj:
-        obj.select_set(True)
+        obj.select = True
         set_active_object(obj)
         set_object_visible(obj)
         try:
@@ -749,27 +749,27 @@ def get_selected_objs_names():
 def select_object_by_name(name):
     obj = get_object_by_name(name)
     if obj:
-        obj.select_set(True)
+        obj.select = True
 
 
 def set_selected_objs_by_name(names):
     for name in names:
         if name in bpy.data.objects:
-            bpy.data.objects[name].select_set(True)
+            bpy.data.objects[name].select = True
 
 
 def get_active_object():
-    return bpy.context.view_layer.objects.active
+    return bpy.context.scene.objects.active
 
 
 def deselect_all_objects():
     for obj in bpy.data.objects:
-        obj.select_set(False)
+        obj.select = False
 
 
 def set_active_object(obj):
     if obj:
-        bpy.context.view_layer.objects.active = obj
+        bpy.context.scene.objects.active = obj
 
 
 def get_object_by_name(name):
@@ -1307,6 +1307,18 @@ def update_bendy_bones(armat):
                 set_bone_constraint_parameter(stretch_to_constraint, 'rest_length', length)
 
 
+def link_to_scene(obj):
+    scn = bpy.context.scene
+    if obj.name:
+        if obj.name in bpy.data.objects:
+            if obj.name not in scn.object_bases:
+                scn.objects.link(obj)
+            else:
+                logger.warning("The object {0} is already linked to the scene".format(obj.name))
+        else:
+            logger.error("Cannot link obj {0} because it's not appended to sccene".format(obj.name))
+
+
 def link_to_collection(obj):
     # sanity check
     if obj.name not in bpy.data.objects:
@@ -1369,10 +1381,10 @@ def append_object_from_library(lib_filepath, obj_names, suffix=None):
         logger.critical("lib %s not found", lib_filepath)
 
     for obj in data_to.objects:
-        link_to_collection(obj)
+        link_to_scene(obj)
         obj_parent = get_object_parent(obj)
         if obj_parent:
-            link_to_collection(obj_parent)
+            link_to_scene(obj_parent)
 
 
 def append_mesh_from_library(lib_filepath, mesh_names, suffix=None):
