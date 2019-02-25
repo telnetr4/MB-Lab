@@ -294,8 +294,8 @@ def init_morphing_props(humanoid_instance):
             prop,
             bpy.props.FloatProperty(
                 name=prop,
-                min=-5.0,
-                max=5.0,
+                min=-500.0,
+                max=500.0,
                 soft_min=0.0,
                 soft_max=1.0,
                 precision=3,
