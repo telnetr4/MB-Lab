@@ -21,7 +21,6 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import logging
-
 import bpy
 
 logger = logging.getLogger(__name__)
