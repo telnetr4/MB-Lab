@@ -28,6 +28,7 @@ from . import facerig
 from . import humanoid, animationengine, proxyengine
 from . import utils
 from . import algorithms
+from .ui import layout
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,11 @@ gui_status = "NEW_SESSION"
 gui_err_msg = ""
 gui_active_panel = None
 gui_active_panel_fin = None
+from . import ui
+
+if "bpy" in locals():
+    import importlib
+    importlib.reload(ui)
 
 
 def start_lab_session():
@@ -2290,6 +2296,7 @@ classes = (
     DeleteFaceRig,
     LoadTemplate,
     VIEW3D_PT_tools_ManuelbastioniLAB,
+    layout.LayoutDemoPanel
 )
 
 
