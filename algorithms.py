@@ -32,7 +32,7 @@ from . import loading as ml
 
 logger = logging.getLogger(__name__)
 
-DEBUG_LEVEL = s.DEBUG_LEVEL
+DEBUG_LEVEL = 0
 
 
 def print_log_report(level, text_to_write):
