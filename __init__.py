@@ -29,7 +29,7 @@ from . import humanoid, animationengine, proxyengine
 from . import utils
 from . import algorithms
 from . import ui
-from .ui import layout
+from . import settings as s
 
 logger = logging.getLogger(__name__)
 
@@ -230,7 +230,7 @@ def set_eevee_render_engine(self, context):
         context.scene.mblab_use_cycles = False
 
 
-def preset_update(self, context):
+def preset_update():
     """
     Update the character while prop slider moves
     """
@@ -1836,7 +1836,7 @@ class LoadTemplate(bpy.types.Operator):
     def execute(self, context):
         global mblab_humanoid
         scn = bpy.context.scene
-        lib_filepath = algorithms.check_blendlibrary_path()
+        lib_filepath = algorithms.get_blendlibrary_path()
         base_model_name = mblab_humanoid.characters_config[scn.mblab_template_name]["template_model"]
         obj = algorithms.import_object_from_lib(lib_filepath, base_model_name, scn.mblab_template_name)
         if obj:
@@ -2107,13 +2107,10 @@ class VIEW3D_PT_tools_ManuelbastioniLAB(bpy.types.Panel):
                         col.prop(scn, 'mblab_measure_filter')
                         col.operator("mbast.measures_apply")
 
+                        m_unit = "cm"
                         if obj.mblab_use_inch:
-                            a_inch = getattr(obj, "body_height_Z", 0)
-                            m_feet = int(a_inch / 12)
-                            m_inch = int(a_inch % 12)
-                            col.label(text="Height: {0}ft {1}in ({2}in)".format(m_feet, m_inch, round(a_inch, 3)))
-                        else:
-                            col.label(text="Height: {0} cm".format(round(getattr(obj, "body_height_Z", 0), 3)))
+                            m_unit = "Inches"
+                        col.label(text="Height: {0} {1}".format(round(getattr(obj, "body_height_Z", 0), 3), m_unit))
                         for measure in sorted(mblab_humanoid.measures.keys()):
                             if measure != "body_height_Z":
                                 if hasattr(obj, measure):
@@ -2316,7 +2313,6 @@ classes = (
     DeleteFaceRig,
     LoadTemplate,
     VIEW3D_PT_tools_ManuelbastioniLAB,
-    layout.LayoutDemoPanel
 )
 
 

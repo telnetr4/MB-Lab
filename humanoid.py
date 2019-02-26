@@ -159,6 +159,8 @@ class HumanCategory:
 class Humanoid:
     """
     The humanoid is a container for categories of modifiers.
+
+    DO NOT STORE PATHS. Make functions that generate the paths.
     """
 
     def __init__(self, lab_version):
@@ -209,13 +211,7 @@ class Humanoid:
         self.phenotypes_path = s.data_path_legacy / "phenotypes" / self.phenotype_data_folder
         self.presets_path = s.data_path_legacy / "presets" / self.presets_data_folder
         self.restposes_path = s.data_path_legacy / "poses" / "rest_poses"
-
         self.transformations_data_path = s.data_path_legacy / "transformations" / self.transformation_filename
-
-        self.exists_rest_poses_data = self.restposes_path.exists()
-        self.exists_preset_data = self.presets_path.exists()
-        self.exists_phenotype_data = self.phenotypes_path.exists()
-        self.exists_transform_data = self.transformations_data_path.is_file()
 
         self.corrective_modifier_name = "mbastlab_corrective_modifier"
         self.morph_engine = morphengine.MorphingEngine(self.obj_name, self.characters_config[character_identifier])
