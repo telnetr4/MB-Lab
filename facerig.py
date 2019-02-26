@@ -40,6 +40,7 @@ def populate_modifier(mod, m):
     mod.coefficients[0] = m['coefficients'][0]
     mod.coefficients[1] = m['coefficients'][1]
 
+
 def populate_modifiers(modifiers, mlist):
     i = 0
     mod = modifiers[0]
@@ -50,6 +51,7 @@ def populate_modifiers(modifiers, mlist):
         else:
             mod = modifiers.new(m['type'])
             populate_modifier(mod, m)
+
 
 def populate_variable(v, var):
     face_rig = bpy.data.objects[var['targets'][0]['id_name']]
@@ -67,14 +69,14 @@ def add_rm_drivers(drivers, add=True):
     mesh = algorithms.get_active_body()
     mname = mesh.name
     for k, v in drivers.items():
-        shape_name = v['data_path'].strip('key_blocks["').strip('"].value')
+        shape_name = v['data_path_legacy'].strip('key_blocks["').strip('"].value')
         idx = bpy.data.objects[mname].data.shape_keys.key_blocks.find(shape_name)
         if idx == -1:
             logger.critical("%s shape key not found", shape_name)
             continue
         check = bpy.data.objects[mname].data.shape_keys.animation_data and \
-                bpy.data.objects[mname].data.shape_keys.animation_data.drivers.\
-                    find(v['data_path'])
+            bpy.data.objects[mname].data.shape_keys.animation_data.drivers.\
+            find(v['data_path_legacy'])
         if check and add:
             logger.critical("%s shape key already has animation data", shape_name)
             continue
@@ -105,6 +107,7 @@ def add_rm_drivers(drivers, add=True):
         for var in variables:
             v = driver.driver.variables.new()
             populate_variable(v, var)
+
 
 def setup_face_rig():
     # check if the face rig is already imported
@@ -163,6 +166,7 @@ def recursive_collection_delete(head):
     bpy.ops.object.delete()
 
     bpy.data.collections.remove(head)
+
 
 def delete_face_rig():
     # check if the face rig is already imported

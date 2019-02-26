@@ -33,7 +33,7 @@ class ProxyEngine:
     def __init__(self):
         self.has_data = False
         self.data_path = algorithms.get_data_path()
-        self.templates_library = algorithms.get_blendlibrary_path()
+        self.templates_library = algorithms.check_blendlibrary_path()
 
         self.assets_path = os.path.join(self.data_path,"assets")
         self.assets_models = algorithms.generate_items_list(self.assets_path, "blend")

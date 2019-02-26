@@ -21,15 +21,18 @@ import time
 import os
 import json
 import array
-
 import mathutils
 import bpy
-
+from pathlib import Path
+import timeit
+from . import utils as ut
 from .utils import get_object_parent
+from . import settings as s
+from . import loading as ml
 
 logger = logging.getLogger(__name__)
 
-DEBUG_LEVEL = 3
+DEBUG_LEVEL = s.DEBUG_LEVEL
 
 
 def print_log_report(level, text_to_write):
@@ -52,50 +55,71 @@ def is_writeable(filepath):
     return False
 
 
-def get_data_path():
-    addon_directory = os.path.dirname(os.path.realpath(__file__))
-    data_dir = os.path.join(addon_directory, "data")
-    logger.info("Looking for the retarget data in the folder %s...", simple_path(data_dir))
+def check_configuration():
+    import warnings
+    warnings.warn("Use loading.py instead.", DeprecationWarning)
+    # Should only be run once, if at all
+    data_path = s.data_path_legacy
+    logger.info("Getting Configurations")
+    configuration_path = data_path / "characters_config.json"
+    if s.characters_config is None:
+        s.characters_config = ml.projmodmerge(ml.legacylike(configuration_path))
+    #     if configuration_path.is_file():
+    #         logger.debug("Characters_config global value set")
+    #         s.characters_config = load_json_data(configuration_path, "Characters definition")
+    #         return s.characters_config
+    #     else:
+    #         logger.critical("Configuration database not found. Please check your Blender addons directory.")
+    #         return None
+    else:
+        logger.warning("You can just use settings.characters_config (usually s.characters_config).")
+    return s.characters_config
 
-    if not os.path.isdir(data_dir):
+
+# TODO make new method on init that checks if data folder exists just once(?)
+def get_data_path():
+    import warnings
+    if not s.data_path_legacy.exists():
         logger.critical("Tools data not found. Please check your Blender addons directory.")
         return None
+    else:
+        warnings.warn("deprecated, just use s.data_path_legacy instead", DeprecationWarning)
+        logger.info("Looking for the retarget data in the folder %s...", simple_path(s.data_path_legacy))
+        return s.data_path_legacy
 
-    return data_dir
 
-
-def get_configuration():
-    data_path = get_data_path()
-
+def check_blendlibrary_path():
+    data_path = s.data_path_legacy
     if data_path:
-        configuration_path = os.path.join(data_path, "characters_config.json")
-        if os.path.isfile(configuration_path):
-            return load_json_data(configuration_path, "Characters definition")
-
-    logger.critical("Configuration database not found. Please check your Blender addons directory.")
-    return None
-
-
-def get_blendlibrary_path():
-    data_path = get_data_path()
-    if data_path:
-        return os.path.join(data_path, "humanoid_library.blend")
+        return data_path / "humanoid_library.blend"
 
     logger.critical("Models library not found. Please check your Blender addons directory.")
     return None
 
 
-def simple_path(input_path, use_basename=True, max_len=50):
+def simple_path(input_path, use_basename=True, max_len=0):
     """
-    Return the last part of long paths
+    Return the last part of long paths. 2nd and 3rd arguments shouldn't be used much, if at all.
     """
-    if use_basename:
-        return os.path.basename(input_path)
-
-    if len(input_path) > max_len:
-        return f"[Trunked]..{input_path[len(input_path)-max_len:]}"
-
-    return input_path
+    if type(input_path) is str:
+        if max_len <= 0:
+            max_len = 50
+        import warnings
+        warnings.warn("Using str for paths is depreciated. Use Path(*pathsegments) from pathlib instead",DeprecationWarning)
+        if use_basename:
+            return os.path.basename(input_path)
+        if len(input_path) > max_len:
+            return f"[Trunked]..{input_path[len(input_path)-max_len:]}"
+        return input_path
+    else:
+        if use_basename:
+            if max_len <= 0:
+                return input_path.relative_to(s.data_path_legacy)
+            else:
+                return input_path.name
+        else:
+            if len(str(input_path)) > max_len:
+                return f"[Trunked]..{str(input_path)[str(len(input_path)) - max_len:]}"
 
 
 def json_booleans_to_python(value):
@@ -122,19 +146,24 @@ def full_dist(vert1, vert2, axis="ALL"):
 
 
 def exists_database(lib_path):
+    # TODO: add Projmod
     result = False
-    if simple_path(lib_path) != "":
-        if os.path.isdir(lib_path):
-            if os.listdir(lib_path):
-                for database_file in os.listdir(lib_path):
-                    _, extension = os.path.splitext(database_file)
-                    if "json" in extension or "bvh" in extension:
-                        result = True
-                    else:
-                        logger.warning("Unknow file extension in %s", simple_path(lib_path))
-
-        else:
-            logger.warning("data path %s not found", simple_path(lib_path))
+    logger.debug("====== exists_database: %s ======", str(lib_path.relative_to(s.data_path_legacy)))
+    if lib_path.is_dir():
+        unexpectedfile = False
+        for f in lib_path.glob("**/*.*"):
+            logger.debug("exists_database: %s", str(f))
+            if not (f.match('*.json') or f.match('*.bvh')):
+                unexpectedfile = True
+                logger.warning("Unknown file extension %s in %s", f.suffix, simple_path(lib_path))
+        # for database_file in os.listdir(str(lib_path)):
+        #     _, extension = os.path.splitext(str(lib_path))
+        #     if "json" in extension or "bvh" in extension:
+        #         result = True
+        #     else:
+    else:
+        logger.warning("data path %s not found", simple_path(lib_path))
+    logger.debug("++++++ exists_database: %s END ++++++\n", str(lib_path.relative_to(s.data_path_legacy)))
     return result
 
 
@@ -445,17 +474,13 @@ def is_in_list(list1, list2, position="ANY"):
     return False
 
 
-def load_json_data(json_path, description=None):
+def load_json_data(json_path, description="Json database"):
     try:
         time1 = time.time()
         with open(json_path, "r") as j_file:
             j_database = json.load(j_file)
-            if not description:
-                logger.info("Json database %s loaded in %s secs",
-                            simple_path(json_path), time.time()-time1)
-            else:
-                logger.info("%s loaded from %s in %s secs",
-                            description, simple_path(json_path), time.time()-time1)
+            logger.info("%s loaded from %s in %s secs",
+                        description, simple_path(json_path), time.time()-time1)
             return j_database
     except IOError:
         if simple_path(json_path) != "":
@@ -844,7 +869,8 @@ def identify_template(obj):
         if obj.type == 'MESH':
             verts = obj.data.vertices
             polygons = obj.data.polygons
-            config_data = get_configuration()
+            # TODO: Projmod: optimize
+            config_data = check_configuration()
             # TODO error messages
             if verts and polygons:
                 for template in config_data["templates_list"]:
@@ -857,7 +883,7 @@ def identify_template(obj):
 
 def get_template_model(obj):
     template = identify_template(obj)
-    config_data = get_configuration()
+    config_data = ml.check_configuration()
     if template:
         return config_data[template]["template_model"]
     return None
@@ -865,7 +891,7 @@ def get_template_model(obj):
 
 def get_template_polygons(obj):
     template = identify_template(obj)
-    config_data = get_configuration()
+    config_data = ml.check_configuration()
     if template:
         return config_data[template]["template_polygons"]
     return None
@@ -1031,12 +1057,12 @@ def generate_items_list(folderpath, file_type="json"):
 
 
 def load_image(filepath):
-    if os.path.isfile(filepath):
-        logger.info("Loading image %s", os.path.basename(filepath))
+    if filepath.exists:
+        logger.info("Loading image %s", filepath.name)
         img = bpy.data.images.load(filepath, check_existing=True)
         img.reload()
     else:
-        logger.info("Image %s not found", os.path.basename(filepath))
+        logger.info("Image %s not found", filepath.name)
 
 
 def get_image(name):

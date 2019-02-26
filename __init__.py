@@ -28,6 +28,7 @@ from . import facerig
 from . import humanoid, animationengine, proxyengine
 from . import utils
 from . import algorithms
+from . import ui
 from .ui import layout
 
 logger = logging.getLogger(__name__)
@@ -45,17 +46,19 @@ bl_info = {
     "category": "Characters"
 }
 
-
 mblab_humanoid = humanoid.Humanoid(bl_info["version"])
 mblab_retarget = animationengine.RetargetEngine()
+logger.debug(">mblab_retarget done")
 mblab_shapekeys = animationengine.ExpressionEngineShapeK()
+logger.debug(">mblab_shapekeys done")
 mblab_proxy = proxyengine.ProxyEngine()
+logger.debug(">mblab_proxy done")
 
 gui_status = "NEW_SESSION"
 gui_err_msg = ""
 gui_active_panel = None
 gui_active_panel_fin = None
-from . import ui
+
 
 if "bpy" in locals():
     import importlib
@@ -78,7 +81,8 @@ def start_lab_session():
     if scn.mblab_use_muscle and scn.mblab_use_ik:
         rigging_type = "muscle_ik"
 
-    lib_filepath = algorithms.get_blendlibrary_path()
+    # TODO projmod blendfile indexer goes here(?)
+    lib_filepath = algorithms.check_blendlibrary_path()
 
     obj = None
     is_existing = False
@@ -342,7 +346,21 @@ def init_restposes_props(humanoid_instance):
             update=restpose_update)
 
 
+def init_poses_props(gender):
+    global mblab_retarget
+    if mblab_retarget.maleposes_exist:
+        if not hasattr(bpy.types.Object, 'male_pose'):
+            malepose_items = algorithms.generate_items_list(mblab_retarget.maleposes_path)
+            bpy.types.Object.male_pose = bpy.props.EnumProperty(
+                items=malepose_items,
+                name="Male pose",
+                default=malepose_items[0][0],
+                update=malepose_update)
+
+
 def init_maleposes_props():
+    import warnings
+    warnings.warn("Depreciated; Use init_poses_props(\"male\") instead.", DeprecationWarning)
     global mblab_retarget
     if mblab_retarget.maleposes_exist:
         if not hasattr(bpy.types.Object, 'male_pose'):
@@ -355,6 +373,8 @@ def init_maleposes_props():
 
 
 def init_femaleposes_props():
+    import warnings
+    warnings.warn("Depreciated; Use init_poses_props(\"female\") instead.", DeprecationWarning)
     global mblab_retarget
     if mblab_retarget.femaleposes_exist:
         if not hasattr(bpy.types.Object, 'female_pose'):
@@ -1484,7 +1504,7 @@ class ExpCharacter(bpy.types.Operator, ExportHelper):
     filter_glob: bpy.props.StringProperty(
         default="*.json",
         options={'HIDDEN'},
-    )
+        )
     bl_context = 'objectmode'
 
     def execute(self, context):
@@ -1816,7 +1836,7 @@ class LoadTemplate(bpy.types.Operator):
     def execute(self, context):
         global mblab_humanoid
         scn = bpy.context.scene
-        lib_filepath = algorithms.get_blendlibrary_path()
+        lib_filepath = algorithms.check_blendlibrary_path()
         base_model_name = mblab_humanoid.characters_config[scn.mblab_template_name]["template_model"]
         obj = algorithms.import_object_from_lib(lib_filepath, base_model_name, scn.mblab_template_name)
         if obj:
