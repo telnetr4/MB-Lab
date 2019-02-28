@@ -152,7 +152,7 @@ def exists_database(lib_path):
     if lib_path.is_dir():
         unexpectedfile = False
         for f in lib_path.glob("**/*.*"):
-            logger.debug("exists_database: %s", str(f))
+            logger.debug("exists_database: %s", str(f.relative_to(s.data_path_legacy)))
             if not (f.match('*.json') or f.match('*.bvh')):
                 unexpectedfile = True
                 logger.warning("Unknown file extension %s in %s", f.suffix, simple_path(lib_path))

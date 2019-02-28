@@ -160,7 +160,7 @@ class Humanoid:
     """
     The humanoid is a container for categories of modifiers.
 
-    DO NOT STORE PATHS. Make functions that generate the paths.
+    REMINDER: DO NOT STORE PATHS. Make functions that generate the paths.
     """
 
     def __init__(self, lab_version):

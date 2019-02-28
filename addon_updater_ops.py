@@ -1409,9 +1409,7 @@ def register(bl_info):
     # in the addon, delete these lines (also from unregister)
     for cls in classes:
         # apply annotations to remove Blender 2.8 warnings, no effect on 2.7
-        print("cls BA: " + str(make_annotations(cls)))
         make_annotations(cls)
-        print("cls: " + str(make_annotations(cls)))
         # 	# comment out this line if using bpy.utils.register_module(__name__)
         bpy.utils.register_class(cls)
 
