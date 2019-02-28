@@ -1365,7 +1365,7 @@ def import_object_from_lib(lib_filepath, name, final_name=None, stop_import=True
 def append_object_from_library(lib_filepath, obj_names, suffix=None):
 
     try:
-        with bpy.data.libraries.load(lib_filepath) as (data_from, data_to):
+        with bpy.data.libraries.load(str(lib_filepath)) as (data_from, data_to):
             if suffix:
                 names_to_append = [name for name in data_from.objects if suffix in name]
                 data_to.objects = names_to_append
@@ -1385,7 +1385,7 @@ def append_object_from_library(lib_filepath, obj_names, suffix=None):
 def append_mesh_from_library(lib_filepath, mesh_names, suffix=None):
 
     try:
-        with bpy.data.libraries.load(lib_filepath) as (data_from, data_to):
+        with bpy.data.libraries.load(str(lib_filepath)) as (data_from, data_to):
             if suffix:
                 names_to_append = [name for name in data_from.meshes if suffix in name]
                 data_to.meshes = names_to_append
@@ -1398,7 +1398,7 @@ def append_mesh_from_library(lib_filepath, mesh_names, suffix=None):
 
 def read_object_names_from_library(lib_filepath):
     try:
-        with bpy.data.libraries.load(lib_filepath) as (data_from, data_to):
+        with bpy.data.libraries.load(str(lib_filepath)) as (data_from, data_to):
             for name in data_from.objects:
                 print("OBJ_LIB: ", name)
     except OSError:
