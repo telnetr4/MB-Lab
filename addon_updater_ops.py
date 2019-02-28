@@ -59,7 +59,7 @@ except Exception as e:
 # Must declare this before classes are loaded
 # otherwise the bl_idname's will not match and have errors.
 # Must be all lowercase and no spaces
-updater.addon = "mb-lab"
+updater.addon = "mb_lab"
 
 
 # -----------------------------------------------------------------------------
@@ -114,7 +114,7 @@ def get_user_preferences(context=None):
 class addon_updater_install_popup(bpy.types.Operator):
     """Check and install update if available"""
     bl_label = "Update {x} addon".format(x=updater.addon)
-    bl_idname = "object.updater_install_popup"
+    bl_idname = updater.addon + ".updater_install_popup"
     bl_description = "Popup menu to check and display current updates available"
     bl_options = {'REGISTER', 'INTERNAL'}
 
@@ -216,7 +216,7 @@ class addon_updater_install_popup(bpy.types.Operator):
 # User preference check-now operator
 class addon_updater_check_now(bpy.types.Operator):
     bl_label = "Check now for " + updater.addon + " update"
-    bl_idname = "object.updater_check_now"
+    bl_idname = updater.addon + ".updater_update_now"
     bl_description = "Check now for an update to the {x} addon".format(
         x=updater.addon)
     bl_options = {'REGISTER', 'INTERNAL'}
@@ -255,7 +255,7 @@ class addon_updater_check_now(bpy.types.Operator):
 
 class addon_updater_update_now(bpy.types.Operator):
     bl_label = "Update " + updater.addon + " addon now"
-    bl_idname = "object.updater_update_now"
+    bl_idname = updater.addon + ".updater_update_now"
     bl_description = "Update to the latest version of the {x} addon".format(
         x=updater.addon)
     bl_options = {'REGISTER', 'INTERNAL'}
@@ -313,7 +313,7 @@ class addon_updater_update_now(bpy.types.Operator):
 
 class addon_updater_update_target(bpy.types.Operator):
     bl_label = updater.addon + " version target"
-    bl_idname = "object.updater_update_target"
+    bl_idname = updater.addon + ".updater_check_now"
     bl_description = "Install a targeted version of the {x} addon".format(
         x=updater.addon)
     bl_options = {'REGISTER', 'INTERNAL'}
