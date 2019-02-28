@@ -33,11 +33,19 @@ logger = logging.getLogger(__name__)
 
 
 class SkeletonEngine:
+
+    '''
+
+    REMINDER: Don't store paths, just the base components, then use methods to gen the paths
+
+
+
+    '''
     armature_modifier_name = "mbastlab_armature"
 
     def __init__(self, obj_body, character_config, rigging_type):
         self.has_data = False
-        self.data_path = algorithms.get_data_path()
+        # self.data_path = algorithms.get_data_path()
         #characters_config = algorithms.get_configuration()
         #character_config = characters_config[character_identifier]
 
