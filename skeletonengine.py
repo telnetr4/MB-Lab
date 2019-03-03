@@ -70,9 +70,9 @@ class SkeletonEngine:
                 self.groups_filename = character_config["vertexgroup_muscle_file"]
 
             skeleton_name = character_config["name"]+"_skeleton"
-            joints_data_path = s.data_path / "joints" / self.joints_filename
-            joints_offset_data_path = s.data_path / "joints" / self.joints_filename
-            vgroup_data_path = s.data_path / "vgroups" / self.groups_filename
+            joints_data_path = s.data_path_legacy / "joints" / self.joints_filename
+            joints_offset_data_path = s.data_path_legacy / "joints" / self.joints_filename
+            vgroup_data_path = s.data_path_legacy / "vgroups" / self.groups_filename
 
             self.lib_filepath = algorithms.check_blendlibrary_path()
             self.joints_database = algorithms.load_json_data(joints_data_path, "Joints data")
