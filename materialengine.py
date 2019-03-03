@@ -21,6 +21,7 @@ import time
 
 import bpy
 from . import algorithms
+from . import settings as s
 
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ class MaterialEngine:
 
     def __init__(self, obj_name, character_config):
 
-        data_path = algorithms.get_data_path()
+        data_path = s.data_path_legacy
         self.obj_name = obj_name
 
         image_file_names = {
