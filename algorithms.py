@@ -95,11 +95,11 @@ def simple_path(input_path, use_basename=True, max_len=50):
     """
     Return the last part of long paths
     """
-        if use_basename:
-            return os.path.basename(input_path)
-        if len(input_path) > max_len:
-            return f"[Trunked]..{input_path[len(input_path)-max_len:]}"
-        return input_path
+    if use_basename:
+        return os.path.basename(input_path)
+    if len(input_path) > max_len:
+        return f"[Trunked]..{input_path[len(input_path) - max_len:]}"
+    return input_path
 
 
 def json_booleans_to_python(value):
