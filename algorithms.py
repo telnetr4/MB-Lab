@@ -1,18 +1,25 @@
-# ManuelbastioniLAB - Copyright (C) 2015-2018 Manuel Bastioni
-# Official site: www.manuelbastioni.com
-# MB-Lab fork website : https://github.com/animate1978/MB-Lab
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# MB-Lab
 
+# MB-Lab fork website : https://github.com/animate1978/MB-Lab
+
+# ##### BEGIN GPL LICENSE BLOCK #####
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 3
+#  of the License, or (at your option) any later version.
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
+#
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# ##### END GPL LICENSE BLOCK #####
+
 
 import logging
 import itertools
@@ -23,16 +30,12 @@ import json
 import array
 import mathutils
 import bpy
-from pathlib import Path
-import timeit
-from . import utils as ut
+
 from .utils import get_object_parent
-from . import settings as s
-from . import loading as ml
 
 logger = logging.getLogger(__name__)
 
-DEBUG_LEVEL = 0
+DEBUG_LEVEL = 3
 
 
 def print_log_report(level, text_to_write):
@@ -55,71 +58,48 @@ def is_writeable(filepath):
     return False
 
 
-def check_configuration():
-    import warnings
-    warnings.warn("Use loading.py instead.", DeprecationWarning)
-    # Should only be run once, if at all
-    data_path = s.data_path_legacy
-    logger.info("Getting Configurations")
-    configuration_path = data_path / "characters_config.json"
-    if s.characters_config is None:
-        s.characters_config = ml.projmodmerge(ml.legacylike(configuration_path))
-    #     if configuration_path.is_file():
-    #         logger.debug("Characters_config global value set")
-    #         s.characters_config = load_json_data(configuration_path, "Characters definition")
-    #         return s.characters_config
-    #     else:
-    #         logger.critical("Configuration database not found. Please check your Blender addons directory.")
-    #         return None
-    else:
-        logger.warning("You can just use settings.characters_config (usually s.characters_config).")
-    return s.characters_config
-
-
-# TODO make new method on init that checks if data folder exists just once(?)
 def get_data_path():
-    import warnings
-    if not s.data_path_legacy.exists():
+    addon_directory = os.path.dirname(os.path.realpath(__file__))
+    data_dir = os.path.join(addon_directory, "data")
+    logger.info("Looking for the retarget data in the folder %s...", simple_path(data_dir))
+
+    if not os.path.isdir(data_dir):
         logger.critical("Tools data not found. Please check your Blender addons directory.")
         return None
-    else:
-        warnings.warn("deprecated, just use s.data_path_legacy instead", DeprecationWarning)
-        logger.info("Looking for the retarget data in the folder %s...", simple_path(s.data_path_legacy))
-        return s.data_path_legacy
+
+    return data_dir
 
 
-def check_blendlibrary_path():
-    data_path = s.data_path_legacy
+def get_configuration():
+    data_path = get_data_path()
+
     if data_path:
-        return data_path / "humanoid_library.blend"
+        configuration_path = os.path.join(data_path, "characters_config.json")
+        if os.path.isfile(configuration_path):
+            return load_json_data(configuration_path, "Characters definition")
+
+    logger.critical("Configuration database not found. Please check your Blender addons directory.")
+    return None
+
+
+def get_blendlibrary_path():
+    data_path = get_data_path()
+    if data_path:
+        return os.path.join(data_path, "humanoid_library.blend")
 
     logger.critical("Models library not found. Please check your Blender addons directory.")
     return None
 
 
-def simple_path(input_path, use_basename=True, max_len=0):
+def simple_path(input_path, use_basename=True, max_len=50):
     """
-    Return the last part of long paths. 2nd and 3rd arguments shouldn't be used much, if at all.
+    Return the last part of long paths
     """
-    if type(input_path) is str:
-        if max_len <= 0:
-            max_len = 50
-        import warnings
-        warnings.warn("Using str for paths is depreciated. Use Path(*pathsegments) from pathlib instead",DeprecationWarning)
         if use_basename:
             return os.path.basename(input_path)
         if len(input_path) > max_len:
             return f"[Trunked]..{input_path[len(input_path)-max_len:]}"
         return input_path
-    else:
-        if use_basename:
-            if max_len <= 0:
-                return input_path.relative_to(s.data_path_legacy)
-            else:
-                return input_path.name
-        else:
-            if len(str(input_path)) > max_len:
-                return f"[Trunked]..{str(input_path)[str(len(input_path)) - max_len:]}"
 
 
 def json_booleans_to_python(value):
@@ -146,24 +126,19 @@ def full_dist(vert1, vert2, axis="ALL"):
 
 
 def exists_database(lib_path):
-    # TODO: add Projmod
     result = False
-    logger.debug("====== exists_database: %s ======", str(lib_path.relative_to(s.data_path_legacy)))
-    if lib_path.is_dir():
-        unexpectedfile = False
-        for f in lib_path.glob("**/*.*"):
-            logger.debug("exists_database: %s", str(f.relative_to(s.data_path_legacy)))
-            if not (f.match('*.json') or f.match('*.bvh')):
-                unexpectedfile = True
-                logger.warning("Unknown file extension %s in %s", f.suffix, simple_path(lib_path))
-        # for database_file in os.listdir(str(lib_path)):
-        #     _, extension = os.path.splitext(str(lib_path))
-        #     if "json" in extension or "bvh" in extension:
-        #         result = True
-        #     else:
+    if simple_path(lib_path) != "":
+        if os.path.isdir(lib_path):
+            if os.listdir(lib_path):
+                for database_file in os.listdir(lib_path):
+                    _, extension = os.path.splitext(database_file)
+                    if "json" in extension or "bvh" in extension:
+                        result = True
+                    else:
+                        logger.warning("Unknow file extension in %s", simple_path(lib_path))
+
     else:
         logger.warning("data path %s not found", simple_path(lib_path))
-    logger.debug("++++++ exists_database: %s END ++++++\n", str(lib_path.relative_to(s.data_path_legacy)))
     return result
 
 
@@ -871,8 +846,7 @@ def identify_template(obj):
         if obj.type == 'MESH':
             verts = obj.data.vertices
             polygons = obj.data.polygons
-            # TODO: Projmod: optimize
-            config_data = check_configuration()
+            config_data = get_configuration()
             # TODO error messages
             if verts and polygons:
                 for template in config_data["templates_list"]:
@@ -885,7 +859,7 @@ def identify_template(obj):
 
 def get_template_model(obj):
     template = identify_template(obj)
-    config_data = ml.check_configuration()
+    config_data = get_configuration()
     if template:
         return config_data[template]["template_model"]
     return None
@@ -893,7 +867,7 @@ def get_template_model(obj):
 
 def get_template_polygons(obj):
     template = identify_template(obj)
-    config_data = ml.check_configuration()
+    config_data = get_configuration()
     if template:
         return config_data[template]["template_polygons"]
     return None
@@ -1059,12 +1033,12 @@ def generate_items_list(folderpath, file_type="json"):
 
 
 def load_image(filepath):
-    if filepath.exists:
-        logger.info("Loading image %s", filepath.name)
+    if os.path.isfile(filepath):
+        logger.info("Loading image %s", os.path.basename(filepath))
         img = bpy.data.images.load(filepath, check_existing=True)
         img.reload()
     else:
-        logger.info("Image %s not found", filepath.name)
+        logger.info("Image %s not found", os.path.basename(filepath))
 
 
 def get_image(name):
@@ -1386,7 +1360,7 @@ def import_object_from_lib(lib_filepath, name, final_name=None, stop_import=True
 def append_object_from_library(lib_filepath, obj_names, suffix=None):
 
     try:
-        with bpy.data.libraries.load(str(lib_filepath)) as (data_from, data_to):
+        with bpy.data.libraries.load(lib_filepath) as (data_from, data_to):
             if suffix:
                 names_to_append = [name for name in data_from.objects if suffix in name]
                 data_to.objects = names_to_append
@@ -1406,7 +1380,7 @@ def append_object_from_library(lib_filepath, obj_names, suffix=None):
 def append_mesh_from_library(lib_filepath, mesh_names, suffix=None):
 
     try:
-        with bpy.data.libraries.load(str(lib_filepath)) as (data_from, data_to):
+        with bpy.data.libraries.load(lib_filepath) as (data_from, data_to):
             if suffix:
                 names_to_append = [name for name in data_from.meshes if suffix in name]
                 data_to.meshes = names_to_append
@@ -1419,7 +1393,7 @@ def append_mesh_from_library(lib_filepath, mesh_names, suffix=None):
 
 def read_object_names_from_library(lib_filepath):
     try:
-        with bpy.data.libraries.load(str(lib_filepath)) as (data_from, data_to):
+        with bpy.data.libraries.load(lib_filepath) as (data_from, data_to):
             for name in data_from.objects:
                 print("OBJ_LIB: ", name)
     except OSError:

@@ -1,18 +1,25 @@
-# ManuelbastioniLAB - Copyright (C) 2015-2018 Manuel Bastioni
-# Official site: www.manuelbastioni.com
-# MB-Lab fork website : https://github.com/animate1978/MB-Lab
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# MB-Lab
 
+# MB-Lab fork website : https://github.com/animate1978/MB-Lab
+
+# ##### BEGIN GPL LICENSE BLOCK #####
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 3
+#  of the License, or (at your option) any later version.
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
+#
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# ##### END GPL LICENSE BLOCK #####
+
 
 import logging
 
@@ -31,7 +38,6 @@ from . import algorithms
 from . import preferences
 from . import addon_updater_ops
 from . import ui
-from . import settings as s
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +88,7 @@ def start_lab_session():
     if scn.mblab_use_muscle and scn.mblab_use_ik:
         rigging_type = "muscle_ik"
 
-    # TODO projmod blendfile indexer goes here(?)
-    lib_filepath = algorithms.check_blendlibrary_path()
+    lib_filepath = algorithms.get_blendlibrary_path()
 
     obj = None
     is_existing = False
@@ -347,21 +352,7 @@ def init_restposes_props(humanoid_instance):
             update=restpose_update)
 
 
-def init_poses_props(gender):
-    global mblab_retarget
-    if mblab_retarget.maleposes_exist:
-        if not hasattr(bpy.types.Object, 'male_pose'):
-            malepose_items = algorithms.generate_items_list(mblab_retarget.maleposes_path)
-            bpy.types.Object.male_pose = bpy.props.EnumProperty(
-                items=malepose_items,
-                name="Male pose",
-                default=malepose_items[0][0],
-                update=malepose_update)
-
-
 def init_maleposes_props():
-    import warnings
-    warnings.warn("Depreciated; Use init_poses_props(\"male\") instead.", DeprecationWarning)
     global mblab_retarget
     if mblab_retarget.maleposes_exist:
         if not hasattr(bpy.types.Object, 'male_pose'):
@@ -374,8 +365,6 @@ def init_maleposes_props():
 
 
 def init_femaleposes_props():
-    import warnings
-    warnings.warn("Depreciated; Use init_poses_props(\"female\") instead.", DeprecationWarning)
     global mblab_retarget
     if mblab_retarget.femaleposes_exist:
         if not hasattr(bpy.types.Object, 'female_pose'):
@@ -2311,15 +2300,21 @@ classes = (
 
 
 def register():
+    # addon updater code and configurations
+    # in case of broken version, try to register the updater first
+    # so that users can revert back to a working version
     addon_updater_ops.register(bl_info)
 
+    # register the example panel, to show updater buttons
     for cls in classes:
         bpy.utils.register_class(cls)
 
 
 def unregister():
+    # addon updater unregister
     addon_updater_ops.unregister()
 
+    # register the example panel, to show updater buttons
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
 

@@ -1,18 +1,25 @@
-# ManuelbastioniLAB - Copyright (C) 2015-2018 Manuel Bastioni
-# Official site: www.manuelbastioni.com
-# MB-Lab fork website : https://github.com/animate1978/MB-Lab
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# MB-Lab
 
+# MB-Lab fork website : https://github.com/animate1978/MB-Lab
+
+# ##### BEGIN GPL LICENSE BLOCK #####
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 3
+#  of the License, or (at your option) any later version.
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
+#
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# ##### END GPL LICENSE BLOCK #####
+
 
 import logging
 import os
@@ -25,10 +32,9 @@ import bpy
 
 from . import algorithms
 from .utils import get_active_armature
-from . import settings as s
 
 logger = logging.getLogger(__name__)
-data_path = s.data_path_legacy
+
 
 class RetargetEngine:
 
@@ -36,19 +42,21 @@ class RetargetEngine:
         self.has_data = False
         self.femaleposes_exist = False
         self.maleposes_exist = False
-        # self.data_path_legacy = algorithms.get_data_path()  # Is there a reason for this?
-        self.maleposes_path = data_path / "poses" / "male_poses"
-        self.femaleposes_path = data_path / "poses" / "female_poses"
-        self.maleposes_exist = self.maleposes_path.exists()
-        self.femaleposes_exist = self.femaleposes_path.exists()
+        self.data_path = algorithms.get_data_path()
+        self.maleposes_path = os.path.join(self.data_path, self.data_path, "poses", "male_poses")
+        self.femaleposes_path = os.path.join(self.data_path, self.data_path, "poses", "female_poses")
+        if os.path.isdir(self.maleposes_path):
+            self.maleposes_exist = True
+        if os.path.isdir(self.femaleposes_path):
+            self.femaleposes_exist = True
 
         self.body_name = ""
         self.armature_name = ""
         self.skeleton_mapped = {}
-        self.lib_filepath = algorithms.check_blendlibrary_path()
-        self.knowledge_path = data_path / "retarget_knowledge.json"
+        self.lib_filepath = algorithms.get_blendlibrary_path()
+        self.knowledge_path = os.path.join(self.data_path, "retarget_knowledge.json")
 
-        if self.lib_filepath.exists() and self.knowledge_path.is_file():
+        if os.path.isfile(self.lib_filepath) and os.path.isfile(self.knowledge_path):
 
             self.knowledge_database = algorithms.load_json_data(self.knowledge_path, "Skeleton knowledge data")
             self.local_rotation_bones = self.knowledge_database["local_rotation_bones"]
@@ -59,7 +67,7 @@ class RetargetEngine:
             self.rot_type = ""
             self.has_data = True
         else:
-            logger.critical("Retarget database not found. l_f.e: {0} k_p.i_f: {1}".format(self.lib_filepath.exists(), self.knowledge_path.relative_to(s.data_path_legacy)))
+            logger.critical("Retarget database not found. Please check your Blender addons directory.")
 
     @staticmethod
     def get_selected_posebone():
@@ -89,12 +97,6 @@ class RetargetEngine:
         if target_armature and target_armature.animation_data:
             return target_armature.animation_data.action
         return None
-
-    def getgenderpath(self,gender):
-        if gender == "male":
-            return self.maleposes_path
-        if gender == "female":
-            return self.femaleposes_path
 
     def check_correction_sync(self):
         scn = bpy.context.scene
@@ -1399,11 +1401,16 @@ class ExpressionEngineShapeK:
 
     def __init__(self):
         self.has_data = False
-        # self.data_path_legacy = algorithms.get_data_path()
-        # TODO rewrite expressions to allow for n number of expression sets
-        self.human_expression_path = s.data_path_legacy / "expressions_comb" / "human_expressions"
+        self.data_path = algorithms.get_data_path()
+        self.human_expression_path = os.path.join(
+            self.data_path,
+            "expressions_comb",
+            "human_expressions")
 
-        self.anime_expression_path = s.data_path_legacy / "expressions_comb" / "anime_expressions"
+        self.anime_expression_path = os.path.join(
+            self.data_path,
+            "expressions_comb",
+            "anime_expressions")
 
         self.expressions_labels = set()
         self.human_expressions_data = self.load_expression_database(self.human_expression_path)
@@ -1426,7 +1433,6 @@ class ExpressionEngineShapeK:
                     self.model_type = "ANIME"
                     return
 
-# TODO load
     @staticmethod
     def load_expression(filepath):
 
@@ -1447,10 +1453,8 @@ class ExpressionEngineShapeK:
 
         return char_data
 
-# TODO load
     def load_expression_database(self, dirpath):
         expressions_data = {}
-        logger.debug("load_expression_database dirpath: %s",str(dirpath))
         if algorithms.exists_database(dirpath):
             for expression_filename in os.listdir(dirpath):
                 expression_filepath = os.path.join(dirpath, expression_filename)

@@ -1,18 +1,24 @@
-# ManuelbastioniLAB - Copyright (C) 2015-2018 Manuel Bastioni
-# Official site: www.manuelbastioni.com
-# MB-Lab fork website : https://github.com/animate1978/MB-Lab
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# MB-Lab
 
+# MB-Lab fork website : https://github.com/animate1978/MB-Lab
+
+# ##### BEGIN GPL LICENSE BLOCK #####
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 3
+#  of the License, or (at your option) any later version.
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
+#
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# ##### END GPL LICENSE BLOCK #####
 
 import logging
 import os
@@ -22,25 +28,16 @@ import mathutils
 
 from . import algorithms
 from .utils import get_object_parent
-from . import settings as s
 
 logger = logging.getLogger(__name__)
 
 
 class SkeletonEngine:
-
-    '''
-
-    REMINDER: Don't store paths, just the base components, then use methods to gen the paths
-
-
-
-    '''
     armature_modifier_name = "mbastlab_armature"
 
     def __init__(self, obj_body, character_config, rigging_type):
         self.has_data = False
-        # self.data_path = algorithms.get_data_path()
+        self.data_path = algorithms.get_data_path()
         #characters_config = algorithms.get_configuration()
         #character_config = characters_config[character_identifier]
 
@@ -64,11 +61,11 @@ class SkeletonEngine:
                 self.groups_filename = character_config["vertexgroup_muscle_file"]
 
             skeleton_name = character_config["name"]+"_skeleton"
-            joints_data_path = s.data_path_legacy / "joints" / self.joints_filename
-            joints_offset_data_path = s.data_path_legacy / "joints" / self.joints_filename
-            vgroup_data_path = s.data_path_legacy / "vgroups" / self.groups_filename
+            joints_data_path = os.path.join(self.data_path, "joints", self.joints_filename)
+            joints_offset_data_path = os.path.join(self.data_path, "joints", self.joints_offset_filename)
+            vgroup_data_path = os.path.join(self.data_path, "vgroups", self.groups_filename)
 
-            self.lib_filepath = algorithms.check_blendlibrary_path()
+            self.lib_filepath = algorithms.get_blendlibrary_path()
             self.joints_database = algorithms.load_json_data(joints_data_path, "Joints data")
             self.joints_offset_database = algorithms.load_json_data(joints_offset_data_path, "Joints offset data")
 
@@ -80,7 +77,7 @@ class SkeletonEngine:
 
             if obj_armat is not None:
                 self.store_z_axis()
-                # doesn't look like armature_visibility is used
+                # TODO doesn't look like armature_visibility is used
                 # anywhere
                 #self.armature_visibility = [x for x in obj_armat.layers]
                 self.armature_name = obj_armat.name

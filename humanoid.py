@@ -1,18 +1,25 @@
-# ManuelbastioniLAB - Copyright (C) 2015-2018 Manuel Bastioni
-# Official site: www.manuelbastioni.com
-# MB-Lab fork website : https://github.com/animate1978/MB-Lab
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# MB-Lab
 
+# MB-Lab fork website : https://github.com/animate1978/MB-Lab
+
+# ##### BEGIN GPL LICENSE BLOCK #####
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 3
+#  of the License, or (at your option) any later version.
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
+#
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# ##### END GPL LICENSE BLOCK #####
+
 
 import logging
 import bpy
@@ -22,18 +29,13 @@ import time
 import json
 import operator
 
-from . import morphengine, skeletonengine, algorithms, materialengine
-from . import settings as s
+from . import morphengine, skeletonengine, algorithms, proxyengine, materialengine
 from . import utils as ut
-from pathlib import Path
-from . import loading as ml
-
 
 logger = logging.getLogger(__name__)
 
 
 class HumanModifier:
-    __slots__ = ('name', 'obj_name', 'properties')
     """
     A modifier is a group of related properties.
     """
@@ -159,8 +161,6 @@ class HumanCategory:
 class Humanoid:
     """
     The humanoid is a container for categories of modifiers.
-
-    REMINDER: DO NOT STORE PATHS. Make functions that generate the paths.
     """
 
     def __init__(self, lab_version):
@@ -168,8 +168,8 @@ class Humanoid:
         self.lab_vers = list(lab_version)
         self.has_data = False
         self.obj_name = ""
-        self.characters_config = ml.check_configuration()
-        self.lib_filepath = algorithms.check_blendlibrary_path()
+        self.characters_config = algorithms.get_configuration()
+        self.lib_filepath = algorithms.get_blendlibrary_path()
         if self.characters_config:
             self.humanoid_types = self.build_items_list("character_list")
             self.template_types = self.build_items_list("templates_list")
@@ -191,10 +191,11 @@ class Humanoid:
         return item_list
 
     def init_database(self, obj, character_identifier, rigging_type):
+        scn = bpy.context.scene
 
         self.has_data = False
         self.obj_name = obj.name
-        logger.info("Found the humanoid: %s", character_identifier)
+        logger.info("Found the humanoid: {0}".format(character_identifier))
 
         logger.info("Init the database...")
 
@@ -208,10 +209,16 @@ class Humanoid:
         self.phenotype_data_folder = self.characters_config[character_identifier]["name"]+"_ptypes"
         self.presets_data_folder = self.characters_config[character_identifier]["presets_folder"]
 
-        self.phenotypes_path = s.data_path_legacy / "phenotypes" / self.phenotype_data_folder
-        self.presets_path = s.data_path_legacy / "presets" / self.presets_data_folder
-        self.restposes_path = s.data_path_legacy / "poses" / "rest_poses"
-        self.transformations_data_path = s.data_path_legacy / "transformations" / self.transformation_filename
+        self.phenotypes_path = os.path.join(self.data_path, "phenotypes", self.phenotype_data_folder)
+        self.presets_path = os.path.join(self.data_path, "presets", self.presets_data_folder)
+        self.restposes_path = os.path.join(self.data_path, "poses", "rest_poses")
+
+        self.transformations_data_path = os.path.join(self.data_path, "transformations", self.transformation_filename)
+
+        self.exists_rest_poses_data = algorithms.exists_database(self.restposes_path)
+        self.exists_preset_data = algorithms.exists_database(self.presets_path)
+        self.exists_phenotype_data = algorithms.exists_database(self.phenotypes_path)
+        self.exists_transform_data = os.path.isfile(self.transformations_data_path)
 
         self.corrective_modifier_name = "mbastlab_corrective_modifier"
         self.morph_engine = morphengine.MorphingEngine(self.obj_name, self.characters_config[character_identifier])
@@ -232,8 +239,8 @@ class Humanoid:
         for morph in self.morph_engine.morph_data.keys():
             self.init_character_data(morph)
 
-        logger.info("Loaded %s categories from morph database", len(self.categories))
-
+        logger.info("Loaded {0} categories from morph database".format(
+            len(self.categories)))
         bpy.context.view_layer.objects.active = obj
         self.measures = self.morph_engine.measures
         self.delta_measures = {}
@@ -323,7 +330,7 @@ class Humanoid:
                         modifier.add(prop)
                     self.character_data[prop] = 0.5
             else:
-                logger.warning("Wrong name for morph: %s", morph_name)
+                logger.warning("Wrong name for morph: {0}".format(morph_name))
 
     @ut.methodtimer
     def reset_category(self, categ):
@@ -406,7 +413,7 @@ class Humanoid:
             self.update_character(mode="update_directly_verts")
             algorithms.select_and_change_mode(obj, 'OBJECT')
 
-            logger.info("Human fitting in %s secs", time.time()-time2)
+            logger.info("Human fitting in {0} secs".format(time.time() - time2))
 
     def clean_verts_to_process(self):
         self.morph_engine.verts_to_update.clear()
@@ -433,10 +440,13 @@ class Humanoid:
     def save_all_textures(self, filepath):
         targets = ["body_displ","body_derm","body_spec","body_rough","body_subd","body_bump","eyes_albedo"]
         for target in targets:
-            dir_path = Path(filepath)
-            new_filepath = dir_path.with_name(dir_path.stem + "_" + target + dir_path.suffix)
-            logger.debug("new_filepath: %s", new_filepath)
-            self.mat_engine.save_texture(str(new_filepath), target)
+            dir_path = os.path.dirname(filepath)
+            filename = os.path.basename(filepath)
+            filename_root = os.path.splitext(filename)[0]
+            filename_ext = os.path.splitext(filename)[1]
+            new_filename = filename_root + "_" + target + filename_ext
+            new_filepath = os.path.join(dir_path, new_filename)
+            self.mat_engine.save_texture(new_filepath, target)
 
     def save_backup_character(self, filepath):
 
@@ -445,7 +455,7 @@ class Humanoid:
         filename_root = os.path.splitext(filename)[0]
         new_filename = filename_root + 'backup.json'
         new_filepath = os.path.join(dir_path, new_filename)
-        logger.info("Saving backup character %s", algorithms.simple_path(new_filepath))
+        logger.info("Saving backup character {0}".format(algorithms.simple_path(new_filepath)))
         self.save_character(new_filepath, export_proportions=False, export_materials=True, export_metadata=True)
 
     def get_subd_visibility(self):
@@ -487,7 +497,7 @@ class Humanoid:
             if hasattr(obj, material_data_prop):
                 setattr(obj, material_data_prop, value)
             else:
-                logger.warning("material %s not found", material_data_prop)
+                logger.warning("material {0}  not found".format(material_data_prop))
         self.material_realtime_activated = True
 
     def update_materials(self, update_textures_nodes=True):
@@ -514,7 +524,8 @@ class Humanoid:
         # if finish_it:
         #     self.morph_engine.apply_finishing_morph()
 
-        logger.info("Expression corrected in %s secs", time.time()-time1)
+        logger.info("Expression corrected in {0} secs".format(time.time() - time1))
+
 
     def reset_character(self):
         time1 = time.time()
@@ -526,7 +537,8 @@ class Humanoid:
                     self.character_data[prop] = 0.5
         self.update_character(mode = "update_all")
 
-        logger.info("Character reset in %s secs", time.time()-time1)
+        logger.info("Character reset in {0} secs".format(time.time() - time1))
+
 
     def reset_metadata(self):
         obj = self.get_object()
@@ -553,7 +565,7 @@ class Humanoid:
                 setattr(obj, meta_data_prop, value)
             else:
                 if "last" not in meta_data_prop:
-                    logger.error("metadata %s.%s not found", obj.name, meta_data_prop)
+                    logger.error("metadata {0}.{1} not found".format(obj.name, meta_data_prop))
         self.metadata_realtime_activated = True
 
     def delete_all_properties(self):
@@ -910,7 +922,8 @@ class Humanoid:
 
                             self.delta_measures[delta_name] = [delta1, delta3]
 
-        logger.info("Delta init in %s secs", time.time()-time1)
+        logger.info("Delta init in {0} secs".format(time.time() - time1))
+
 
     def search_best_value(self, m_name, wished_measure, human_modifier, prop):
 
@@ -972,7 +985,7 @@ class Humanoid:
         # logger.info("Measures fitting in %s secs", time.time()-time1)
 
     def save_character(self, filepath, export_proportions=True, export_materials=True, export_metadata=True):
-        logger.info("Exporting character to %s", algorithms.simple_path(filepath))
+        logger.info("Exporting character to {0}".format(algorithms.simple_path(filepath)))
         obj = self.get_object()
         char_data = {
             "manuellab_vers": self.lab_vers,
@@ -1004,8 +1017,7 @@ class Humanoid:
             output_file.close()
 
     def export_measures(self, filepath):
-        # TODO export measures to custom property?
-        logger.info("Exporting measures to %s", algorithms.simple_path(filepath))
+        logger.info("Exporting measures to {0}".format(algorithms.simple_path(filepath)))
         obj = self.get_object()
         char_data = {"manuellab_vers": self.lab_vers, "measures": dict()}
         if obj:
@@ -1029,7 +1041,7 @@ class Humanoid:
         else:
             charac_data = data_source
 
-        logger.info("Loading character from %s", log_msg_type)
+        logger.info("Loading character from {0}".format(log_msg_type))
 
         if "manuellab_vers" in charac_data:
             if not algorithms.check_version(charac_data["manuellab_vers"]):
@@ -1082,8 +1094,7 @@ class Humanoid:
 
         self.update_character(mode=update_mode)
 
-    @staticmethod
-    def load_measures(filepath):
+    def load_measures(self, filepath):
         char_data = algorithms.load_json_data(filepath, "Measures data")
         if not ("measures" in char_data):
             logger.error("This json has not the measures info, {0}".format(algorithms.simple_path(filepath)))
@@ -1129,7 +1140,7 @@ class Humanoid:
 
     def load_obj_prototype(self, obj_name):
 
-        obj_path = s.data_path_legacy / "shared_objs" / obj_name + ".obj"
+        obj_path = os.path.join(self.data_path, "shared_objs", obj_name + ".obj")
 
         bpy.ops.import_scene.obj(
             use_split_objects=False,

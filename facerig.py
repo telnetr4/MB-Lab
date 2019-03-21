@@ -1,18 +1,25 @@
 # MB-Lab
 
 # MB-Lab fork website : https://github.com/animate1978/MB-Lab
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
 
+# ##### BEGIN GPL LICENSE BLOCK #####
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 3
+#  of the License, or (at your option) any later version.
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
+#
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# ##### END GPL LICENSE BLOCK #####
+
 
 import logging
 import json
@@ -69,14 +76,14 @@ def add_rm_drivers(drivers, add=True):
     mesh = algorithms.get_active_body()
     mname = mesh.name
     for k, v in drivers.items():
-        shape_name = v['data_path_legacy'].strip('key_blocks["').strip('"].value')
+        shape_name = v['data_path'].strip('key_blocks["').strip('"].value')
         idx = bpy.data.objects[mname].data.shape_keys.key_blocks.find(shape_name)
         if idx == -1:
             logger.critical("%s shape key not found", shape_name)
             continue
         check = bpy.data.objects[mname].data.shape_keys.animation_data and \
-            bpy.data.objects[mname].data.shape_keys.animation_data.drivers.\
-            find(v['data_path_legacy'])
+                bpy.data.objects[mname].data.shape_keys.animation_data.drivers. \
+                    find(v['data_path'])
         if check and add:
             logger.critical("%s shape key already has animation data", shape_name)
             continue
