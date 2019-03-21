@@ -2290,6 +2290,7 @@ classes = (
 )
 
 def register():
+    print("register main")
     # addon updater code and configurations
     # in case of broken version, try to register the updater first
     # so that users can revert back to a working version
@@ -2301,6 +2302,7 @@ def register():
 
 
 def unregister():
+    print("unregister main")
     # addon updater unregister
     addon_updater_ops.unregister()
 
