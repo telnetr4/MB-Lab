@@ -6,7 +6,7 @@
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; either version 2
+#  as published by the Free Software Foundation; either version 3
 #  of the License, or (at your option) any later version.
 #
 #  This program is distributed in the hope that it will be useful,
@@ -28,6 +28,7 @@ import time
 import os
 import json
 import array
+
 import mathutils
 import bpy
 
@@ -97,8 +98,10 @@ def simple_path(input_path, use_basename=True, max_len=50):
     """
     if use_basename:
         return os.path.basename(input_path)
+
     if len(input_path) > max_len:
         return f"[Trunked]..{input_path[len(input_path) - max_len:]}"
+
     return input_path
 
 
@@ -140,7 +143,6 @@ def exists_database(lib_path):
         else:
             logger.warning("data path %s not found", simple_path(lib_path))
     return result
-
 
 # TODO: This may be the data input we are looking for?
 def length_of_strip(vertices_coords, indices, axis="ALL"):
@@ -451,13 +453,17 @@ def is_in_list(list1, list2, position="ANY"):
 
 
 # TODO: Calls from morphengine.py loads JSON file
-def load_json_data(json_path, description="Json database"):
+def load_json_data(json_path, description=None):
     try:
         time1 = time.time()
         with open(json_path, "r") as j_file:
             j_database = json.load(j_file)
-            logger.info("%s loaded from %s in %s secs",
-                        description, simple_path(json_path), time.time() - time1)
+            if not description:
+                logger.info("Json database %s loaded in %s secs",
+                            simple_path(json_path), time.time() - time1)
+            else:
+                logger.info("%s loaded from %s in %s secs",
+                            description, simple_path(json_path), time.time() - time1)
             return j_database
     except IOError:
         if simple_path(json_path) != "":

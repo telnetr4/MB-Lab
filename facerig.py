@@ -6,7 +6,7 @@
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; either version 2
+#  as published by the Free Software Foundation; either version 3
 #  of the License, or (at your option) any later version.
 #
 #  This program is distributed in the hope that it will be useful,
@@ -47,7 +47,6 @@ def populate_modifier(mod, m):
     mod.coefficients[0] = m['coefficients'][0]
     mod.coefficients[1] = m['coefficients'][1]
 
-
 def populate_modifiers(modifiers, mlist):
     i = 0
     mod = modifiers[0]
@@ -58,7 +57,6 @@ def populate_modifiers(modifiers, mlist):
         else:
             mod = modifiers.new(m['type'])
             populate_modifier(mod, m)
-
 
 def populate_variable(v, var):
     face_rig = bpy.data.objects[var['targets'][0]['id_name']]
@@ -114,7 +112,6 @@ def add_rm_drivers(drivers, add=True):
         for var in variables:
             v = driver.driver.variables.new()
             populate_variable(v, var)
-
 
 def setup_face_rig():
     # check if the face rig is already imported
@@ -173,7 +170,6 @@ def recursive_collection_delete(head):
     bpy.ops.object.delete()
 
     bpy.data.collections.remove(head)
-
 
 def delete_face_rig():
     # check if the face rig is already imported
