@@ -344,6 +344,8 @@ def init_restposes_props(humanoid_instance):
 
 
 def init_maleposes_props():
+    import warnings
+    warnings.warn("Depreciated; Use init_poses_props(\"male\") instead.", DeprecationWarning)
     global mblab_retarget
     if mblab_retarget.maleposes_exist:
         if not hasattr(bpy.types.Object, 'male_pose'):
@@ -356,6 +358,8 @@ def init_maleposes_props():
 
 
 def init_femaleposes_props():
+    import warnings
+    warnings.warn("Depreciated; Use init_poses_props(\"female\") instead.", DeprecationWarning)
     global mblab_retarget
     if mblab_retarget.femaleposes_exist:
         if not hasattr(bpy.types.Object, 'female_pose'):
