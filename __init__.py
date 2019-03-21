@@ -2388,6 +2388,7 @@ def register():
     # addon updater code and configurations
     # in case of broken version, try to register the updater first
     # so that users can revert back to a working version
+    logger.debug("Register")
     addon_updater_ops.register(bl_info)
 
     # register the example panel, to show updater buttons
