@@ -173,10 +173,10 @@ class MorphingEngine:
     def load_bboxes_database(self, bounding_box_path):
         self.bbox_data = algorithms.load_json_data(bounding_box_path,"Bounding box data")
 
-    #TODO: This loads the morphs
+    # TODO: This loads the morphs
     def load_morphs_database(self, morph_data_path):
         time1 = time.time()
-        m_data = algorithms.load_json_data(morph_data_path,"Morph data") #calls algorithms.py
+        m_data = algorithms.load_json_data(morph_data_path, "Morph data")  # calls algorithms.py
         if m_data:
             for morph_name, deltas in m_data.items():
                 morph_deltas = []
@@ -218,7 +218,7 @@ class MorphingEngine:
             if measure_name in self.measures_data:
                 indices =  self.measures_data[measure_name]
                 axis = measure_name[-1]
-                return algorithms.length_of_strip(vert_coords, indices, axis) #check algorithms.py
+                return algorithms.length_of_strip(vert_coords, indices, axis)  #check algorithms.py
         else:
             for measure_name in self.measures_data.keys():
                 measures[measure_name] = self.calculate_measures(measure_name, vert_coords)
