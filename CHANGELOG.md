@@ -57,6 +57,7 @@ All changes will be documented here
 ## Bug Fixes
 
 - Set lighting setup default to False, fixing a minor startup bug
+- 
 
 # MB-Lab 1.7.3
 
