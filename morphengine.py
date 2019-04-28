@@ -24,6 +24,7 @@
 import logging
 import os
 import bpy
+from pathlib import Path
 
 import mathutils
 
@@ -55,49 +56,21 @@ class MorphingEngine:
         self.measures_database_exist = False
 
         if self.shared_morphs_filename_extra != "":
-            self.shared_morph_extra_data_path = os.path.join(
-                data_path,
-                "morphs",
-                self.shared_morphs_filename_extra)
+            self.shared_morph_extra_data_path = data_path / "morphs" / self.shared_morphs_filename_extra
         else:
             self.shared_morph_extra_data_path = None
 
-        self.measures_data_path = os.path.join(
-            data_path,
-            "measures",
-            self.shared_measures_filename)
-        self.bodies_data_path = os.path.join(
-            data_path,
-            "anthropometry",
-            self.shared_anthropometric_path)
-        self.shared_morph_data_path = os.path.join(
-            data_path,
-            "morphs",
-            self.shared_morphs_filename)
-        self.morph_data_path = os.path.join(
-            data_path,
-            "morphs",
-            self.morphs_filename)
-        self.extra_morph_data_path = os.path.join(
-            data_path,
-            "morphs",
-            self.morphs_filename_extra)
-        self.bounding_box_path = os.path.join(
-            data_path,
-            "bboxes",
-            self.shared_bbox_filename)
-        self.expressions_path = os.path.join(
-            data_path,
-            "expressions_morphs",
-            self.expressions_filename)
-        self.vertices_path = os.path.join(
-            data_path,
-            "vertices",
-            self.vertices_filename)
+        self.measures_data_path = data_path / "measures" / self.shared_measures_filename
+        self.bodies_data_path = data_path / "anthropometry" / self.shared_anthropometric_path
+        self.shared_morph_data_path = data_path / "morphs" / self.shared_morphs_filename
+        self.morph_data_path = data_path / "morphs" / self.morphs_filename
+        self.extra_morph_data_path = data_path / "morphs" / self.morphs_filename_extra
+        self.bounding_box_path = data_path / "bboxes" / self.shared_bbox_filename
+        self.expressions_path = data_path / "expressions_morphs" / self.expressions_filename
+        self.vertices_path = data_path / "vertices" / self.vertices_filename
 
-
-        if os.path.isdir(self.bodies_data_path):
-            if os.path.isfile(self.measures_data_path):
+        if self.bodies_data_path.is_dir():
+            if self.measures_data_path.is_file():
                 self.measures_database_exist = True
 
         self.verts_to_update = set()
@@ -261,18 +234,18 @@ class MorphingEngine:
     def compare_data_proportions(self):
         scores = []
         time1 = time.time()
-        if os.path.isdir(self.bodies_data_path):
-            for database_file in os.listdir(self.bodies_data_path):
-                body_data, extension = os.path.splitext(database_file)
-                if "json" in extension:
-                    scores.append(self.compare_file_proportions(os.path.join(self.bodies_data_path,database_file)))
+        if self.bodies_data_path.is_dir():
+            filelist = self.bodies_data_path.glob('**/*')
+            for database_file in filelist:
+                body_data = database_file.stem
+                extension = database_file.suffix
+                if "json" in extension:  # TODO: DOUBLE CHECK THIS
+                    scores.append(self.compare_file_proportions(self.bodies_data_path / database_file))
             scores.sort(key=operator.itemgetter(0), reverse=False)
             logger.info("Measures compared with database in {0} seconds".format(time.time()-time1))
         else:
             logger.warning("Bodies database not found")
         return scores
-
-
 
 
     def correct_morphs(self, names):

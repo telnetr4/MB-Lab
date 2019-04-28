@@ -217,9 +217,9 @@ class Humanoid:
 
         self.transformations_data_path = os.path.join(self.data_path, "transformations", self.transformation_filename)
 
-        self.exists_rest_poses_data = algorithms.exists_database(self.restposes_path)
-        self.exists_preset_data = algorithms.exists_database(self.presets_path)
-        self.exists_phenotype_data = algorithms.exists_database(self.phenotypes_path)
+        self.exists_rest_poses_data = algorithms.exists_filedatabase(self.restposes_path)
+        self.exists_preset_data = algorithms.exists_filedatabase(self.presets_path)
+        self.exists_phenotype_data = algorithms.exists_filedatabase(self.phenotypes_path)
         self.exists_transform_data = os.path.isfile(self.transformations_data_path)
 
         self.corrective_modifier_name = "mbastlab_corrective_modifier"

@@ -33,6 +33,7 @@ import mathutils
 import bpy
 
 from .utils import get_object_parent
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -60,11 +61,11 @@ def is_writeable(filepath):
 
 
 def get_data_path():
-    addon_directory = os.path.dirname(os.path.realpath(__file__))
-    data_dir = os.path.join(addon_directory, "data")
-    logger.info("Looking for the retarget data in the folder %s...", simple_path(data_dir))
+    addon_directory = Path(__file__)
+    data_dir = addon_directory / "data"
+    logger.info("Looking for the retarget data in the folder %s...", data_dir.name)
 
-    if not os.path.isdir(data_dir):
+    if not data_dir.is_dir():
         logger.critical("Tools data not found. Please check your Blender addons directory.")
         return None
 
@@ -75,32 +76,34 @@ def get_configuration():
     data_path = get_data_path()
 
     if data_path:
-        configuration_path = os.path.join(data_path, "characters_config.json")
-        if os.path.isfile(configuration_path):
-            return load_json_data(configuration_path, "Characters definition")
+        configuration_path = data_path / "characters_config.json"
+        if configuration_path.is_file():
+            return load_json_data(configuration_path, "Configuration database (Characters definition)")
 
-    logger.critical("Configuration database not found. Please check your Blender addons directory.")
+    logger.error("Error in get_configuration.")
     return None
 
 
 def get_blendlibrary_path():
     data_path = get_data_path()
-    if data_path:
-        return os.path.join(data_path, "humanoid_library.blend")
+    return data_path / "humanoid_library.blend"
 
     logger.critical("Models library not found. Please check your Blender addons directory.")
     return None
 
 
 def simple_path(input_path, use_basename=True, max_len=50):
+    import warnings
+    warnings.warn("simple_path deprecated as we are switching to pathlib, use path.name or Path.relative_to(data_dir)", DeprecationWarning)
     """
     Return the last part of long paths
     """
     if use_basename:
-        return os.path.basename(input_path)
+        return input_path.name
 
-    if len(input_path) > max_len:
-        return f"[Trunked]..{input_path[len(input_path) - max_len:]}"
+    input_path_str = str(input_path)
+    if len(input_path_str) > max_len:
+        return f"[Trunked]..{input_path[len(input_path_str) - max_len:]}"
 
     return input_path
 
@@ -128,21 +131,36 @@ def full_dist(vert1, vert2, axis="ALL"):
     return abs(v1[2]-v2[2])
 
 
-def exists_database(lib_path):
-    result = False
-    if simple_path(lib_path) != "":
-        if os.path.isdir(lib_path):
-            if os.listdir(lib_path):
-                for database_file in os.listdir(lib_path):
-                    _, extension = os.path.splitext(database_file)
-                    if "json" in extension or "bvh" in extension:
-                        result = True
-                    else:
-                        logger.warning("Unknow file extension in %s", simple_path(lib_path))
+def exists_filedatabase(lib_path, full=False):
+    if lib_path is str:
+        logger.warning("%s was passed as a string. Use pathlib instead.", lib_path)
+        lib_path = Path(lib_path)
+    if lib_path.is_dir():
+        for x in lib_path.iterdir():
+            if x.suffix == "json" or x.suffix == "bvh":
+                if not full:
+                    return True
+                else:
+                    result = True
+            else:
+                logger.warning("Unknown file extension in %s", x.name)
+                result = False
+        return result
 
-        else:
-            logger.warning("data path %s not found", simple_path(lib_path))
-    return result
+    # result = False
+    # if os.path.isdir(lib_path):
+    #     if os.listdir(lib_path):
+    #         for database_file in os.listdir(lib_path):
+    #             _, extension = os.path.splitext(database_file)
+    #             if "json" in extension or "bvh" in extension:
+    #                 result = True
+    #             else:
+    #                 logger.warning("Unknow file extension in %s", simple_path(lib_path))
+    #
+    # else:
+    #     logger.warning("data path %s not found", simple_path(lib_path))
+
+    # return result
 
 # TODO: This may be the data input we are looking for?
 def length_of_strip(vertices_coords, indices, axis="ALL"):
@@ -460,16 +478,15 @@ def load_json_data(json_path, description=None):
             j_database = json.load(j_file)
             if not description:
                 logger.info("Json database %s loaded in %s secs",
-                            simple_path(json_path), time.time() - time1)
+                            json_path.name, time.time() - time1)
             else:
                 logger.info("%s loaded from %s in %s secs",
-                            description, simple_path(json_path), time.time() - time1)
+                            description, json_path.name, time.time() - time1)
             return j_database
     except IOError:
-        if simple_path(json_path) != "":
-            logger.warning("File not found: %s", simple_path(json_path))
+        logger.warning("%s not found: %s. Please check your Blender addons directory.", description, json_path.name)
     except json.JSONDecodeError:
-        logger.warning("Errors in json file: %s", simple_path(json_path))
+        logger.warning("Errors in json file: %s", json_path.name)
     return None
 
 
@@ -1027,7 +1044,7 @@ def set_verts_coords_from_file(obj, vertices_path):
 
 def generate_items_list(folderpath, file_type="json"):
     items_list = []
-    if os.path.isdir(folderpath):
+    if folderpath.is_dir():
         for database_file in os.listdir(folderpath):
             the_item, extension = os.path.splitext(database_file)
             if file_type in extension:

@@ -1455,13 +1455,13 @@ class ExpressionEngineShapeK:
 
     def load_expression_database(self, dirpath):
         expressions_data = {}
-        if algorithms.exists_database(dirpath):
-            for expression_filename in os.listdir(dirpath):
-                expression_filepath = os.path.join(dirpath, expression_filename)
-                e_item, extension = os.path.splitext(expression_filename)
-                if "json" in extension:
-                    self.expressions_labels.add(e_item)
-                    expressions_data[e_item] = self.load_expression(expression_filepath)
+        # if algorithms.exists_filedatabase(dirpath):
+        for expression_filename in os.listdir(dirpath):
+            expression_filepath = os.path.join(dirpath, expression_filename)
+            e_item, extension = os.path.splitext(expression_filename)
+            if "json" in extension:
+                self.expressions_labels.add(e_item)
+                expressions_data[e_item] = self.load_expression(expression_filepath)
         return expressions_data
 
     def sync_expression_to_gui(self):

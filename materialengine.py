@@ -25,6 +25,7 @@ import logging
 import numpy as np
 import os
 import time
+from pathlib import Path
 
 import bpy
 from . import algorithms
@@ -58,10 +59,7 @@ class MaterialEngine:
         image_file_paths = {}
 
         for img_id, value in image_file_names.items():
-            image_file_paths[img_id] = os.path.join(
-                os.path.join(data_path, "textures"),
-                value
-            )
+            image_file_paths[img_id] = data_path / "textures" / value
 
         self.image_file_paths = image_file_paths
         self.image_file_names = image_file_names
@@ -74,36 +72,37 @@ class MaterialEngine:
 
     def load_texture(self, img_path, shader_target):
         algorithms.load_image(img_path)
-        self.image_file_names[shader_target] = os.path.basename(img_path)
+        img_path = Path(img_path)
+        self.image_file_names[shader_target] = img_path.name
         self.update_shaders()
 
     @property
     def texture_dermal_exist(self):
-        return os.path.isfile(self.image_file_paths["body_derm"])
+        return self.image_file_paths["body_derm"].is_file()
 
     @property
     def texture_spec_exist(self):
-        return os.path.isfile(self.image_file_paths["body_spec"])
+        return self.image_file_paths["body_spec"].is_file()
 
     @property
     def texture_rough_exist(self):
-        return os.path.isfile(self.image_file_paths["body_rough"])
+        return self.image_file_paths["body_rough"].is_file()
 
     @property
     def texture_subd_exist(self):
-        return os.path.isfile(self.image_file_paths["body_subd"])
+        return self.image_file_paths["body_subd"].is_file()
 
     @property
     def texture_eyes_exist(self):
-        return os.path.isfile(self.image_file_paths["eyes_albedo"])
+        return self.image_file_paths["eyes_albedo"].is_file()
 
     @property
     def texture_bump_exist(self):
-        return os.path.isfile(self.image_file_paths["body_bump"])
+        return self.image_file_paths["body_bump"].is_file()
 
     @property
     def texture_displace_exist(self):
-        return os.path.isfile(self.image_file_paths["displ_data"])
+        return self.image_file_paths["displ_data"].is_file()
 
     @staticmethod
     def calculate_disp_pixels(blender_image, age_factor, tone_factor, mass_factor):
@@ -248,11 +247,12 @@ class MaterialEngine:
                              algorithms.simple_path(self.image_file_paths["displ_data"]))
 
     def save_texture(self, filepath, shader_target):
+        filepath = Path(filepath)
         img_name = self.image_file_names[shader_target]
         logger.info("Saving image %s in %s", img_name, algorithms.simple_path(filepath))
         algorithms.save_image(img_name, filepath)
         algorithms.load_image(filepath)  # Load the just saved image to replace the current one
-        self.image_file_names[shader_target] = os.path.basename(filepath)
+        self.image_file_names[shader_target] = filepath.name
         self.update_shaders()
 
 
