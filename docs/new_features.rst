@@ -43,6 +43,14 @@ Save and load config files to adjust bones after importing BVH animation files.
 
 .. image:: images/bone_offset_01.png
 
+* Animation BVH Files
+
+These are "cleaned up" BVH files of some basic animations such as walking, running, jumping etc...
+
+* BVH Bone Config
+
+The ability to save and load config files to adjust bones after importing BVH animation files can be quite helpful. (pending)
+
 
 =============
 Version 1.7.4
