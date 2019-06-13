@@ -45,7 +45,7 @@ Save and load config files to adjust bones after importing BVH animation files.
 
 * Animation BVH Files
 
-These are "cleaned up" BVH files of some basic animations such as walking, running, jumping etc...
+These are "raw" BVH files of some basic animations such as walking, running, jumping etc...
 
 * BVH Bone Config
 
