@@ -27,6 +27,7 @@ This fork is an attempt to keep this addon going forward as the original author 
 
 ## Changed
 
+- Improved Iris shader (PENDING)
 - Changed descriptions for male and female elf and dwarf characters
 - Changed Blender minimum version to 2.80.74
 - Removed Buggy message from Muscle checkbox because the Blender bug has been fixed
