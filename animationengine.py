@@ -143,9 +143,9 @@ class RetargetEngine:
                 d_path2 = f'pose.bones["{bone.name}"].rotation_axis_angle'
                 d_path3 = f'pose.bones["{bone.name}"].rotation_euler'
 
-                animation_curve1 = action.fcurves.find(d_path1, 0)
-                animation_curve2 = action.fcurves.find(d_path2, 0)
-                animation_curve3 = action.fcurves.find(d_path3, 0)
+                animation_curve1 = action.fcurves.find(d_path1, index=0)
+                animation_curve2 = action.fcurves.find(d_path2, index=0)
+                animation_curve3 = action.fcurves.find(d_path3, index=0)
 
                 if animation_curve1:
                     r_type = "QUATERNION"
@@ -176,7 +176,7 @@ class RetargetEngine:
                 if selected_bone:
                     d_path = self.get_bone_curve_id(selected_bone)
                     if d_path:
-                        animation_curve = action.fcurves.find(d_path, channel)
+                        animation_curve = action.fcurves.find(d_path, index=channel)
                         animation_data_id = f'{d_path}{str(channel)}'
                         if animation_curve:
                             return (armat.name, animation_curve, animation_data_id)
@@ -337,7 +337,7 @@ class RetargetEngine:
                 try:
                     return bones_chain[index]
                 except IndexError:
-                    logger.warning("The chain %s of mocap file has less bones than the chain in the lab", bones_chain)
+                    logger.warning("The chain %s of mocap file has less bones than the chain in MB-Lab", bones_chain)
 
         return None
 
@@ -1133,7 +1133,7 @@ class RetargetEngine:
     def rotate_skeleton(armat, rot_quat):
         armat.rotation_mode = 'QUATERNION'
         armat.rotation_quaternion = rot_quat
-        bpy.context.scene.update()
+        bpy.context.view_layer.update()
 
     def use_animation_pelvis(self, target_armat, source_armat):
 

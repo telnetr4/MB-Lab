@@ -1230,7 +1230,6 @@ def select_link_function(self, tag):
 # Register, should be run in the register module itself
 # -----------------------------------------------------------------------------
 
-
 classes = (
 	addon_updater_install_popup,
 	addon_updater_check_now,
@@ -1317,7 +1316,7 @@ def register(bl_info):
 	# as a part of the pattern list below so they will always be overwritten by an
 	# update. If a pattern file is not found in new update, no action is taken
 	# This does NOT detele anything, only defines what is allowed to be overwritten
-	updater.overwrite_patterns = ["*.png", "*.jpg", "*.blend", "*.json", "README.md", "LICENSE.txt"]
+	updater.overwrite_patterns = ["*.py","*.pyc","*.png","*.jpg","*.blend","*.json","README.md","LICENSE.txt"]
 	# updater.overwrite_patterns = []
 	# other examples:
 	# ["*"] means ALL files/folders will be overwritten by update, was the behavior pre updater v1.0.4
@@ -1411,7 +1410,7 @@ def register(bl_info):
 		print("cls BA: " + str(make_annotations(cls)))
 		make_annotations(cls)
 		print("cls: " + str(make_annotations(cls)))
-		# 	# comment out this line if using bpy.utils.register_module(__name__)
+		 	# comment out this line if using bpy.utils.register_module(__name__)
 		bpy.utils.register_class(cls)
 
 	# special situation: we just updated the addon, show a popup
@@ -1423,7 +1422,7 @@ def register(bl_info):
 def unregister():
 	for cls in reversed(classes):
 		# comment out this line if using bpy.utils.unregister_module(__name__)
-		bpy.utils.unregister_class(cls)
+		bpy.utils.unregister_class(cls) #BUG - https://github.com/animate1978/MB-Lab/issues/101
 
 	# clear global vars since they may persist if not restarting blender
 	updater.clear_state()  # clear internal vars, avoids reloading oddities
