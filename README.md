@@ -6,6 +6,8 @@ Character creation tool for Blender
 
 MB-Lab has been developed to work with Blender 4.0
 
+This project has largely been superseded by [Charmorph](https://github.com/Upliner/CharMorph).
+
 ## Contributors wanted!
 
 We are a small bunch of developers and artists but we always need more! MB-Lab's code is quite complex and needs work, to either fix bugs or to add new features, Python programmers are always welcome! Do you have other skills? We need modelers to help with future base models for instance. Are you a specialist in rigging? We could use some help improving the rigs for MB-Lab. There are lots to do in this project, we can only do so much at a time so please feel free to join us, fork the repository and then make something cool.
